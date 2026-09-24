@@ -1,0 +1,1 @@
+export default function Dashboard(){return <main className="shell"><section className="card"><span className="eyebrow">EMDAD ENGINEERING SOLUTIONS</span><h1>EMDAD NEXUS</h1><p>CRM foundation is ready. Core CRM modules will be implemented from the approved source specification.</p></section></main>}
