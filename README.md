@@ -14,3 +14,5 @@ Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in .env.lo
 
 ## Security boundary
 Authentication is handled by Supabase Auth. CRM authorization is derived from the public.users record and database RLS; the browser must not be trusted for sales-person filtering.
+
+EMDAD NEXUS Projects module is under implementation.
