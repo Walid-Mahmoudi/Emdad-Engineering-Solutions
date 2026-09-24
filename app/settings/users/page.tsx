@@ -1,2 +1,56 @@
 import { createClient } from "@/lib/supabase/server";
-export default async function UsersPage(){const s=await createClient();const {data:{user}}=await s.auth.getUser();if(!user)return <main className="nexus-page"><h1>User Access</h1><p>Unauthorized</p></main>;const {data:p}=await s.from("users").select("role").eq("user_id",user.id).maybeSingle();if(!p||p.role!=="Admin")return <main className="nexus-page"><h1>User Access</h1><p>Admin only.</p></main>;const {data}=await s.from("users").select("user_id,name,email,role,active,sales_name,created_at,updated_at").order("name");return <main className="nexus-page"><div className="nexus-header"><div><h1>User Access</h1><p>CRM users, roles and sales names.</p></div></div><section className="nexus-card"><div className="nexus-table-wrap"><table className="nexus-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Sales Name</th><th>Active</th></tr></thead><tbody>{(data||[]).map(x=><tr key={x.user_id}><td>{x.name}</td><td>{x.email}</td><td>{x.role}</td><td>{x.sales_name||"—"}</td><td>{x.active?"Active":"Inactive"}</td></tr>)}</tbody></table></div></section></main>}
+
+export default async function UsersPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return <main className="nexus-page"><h1>User Access</h1><p>Unauthorized</p></main>;
+  }
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!profile || profile.role !== "Admin") {
+    return <main className="nexus-page"><h1>User Access</h1><p>Admin only.</p></main>;
+  }
+
+  const { data: users } = await supabase
+    .from("users")
+    .select("user_id,name,email,role,active,sales_name,created_at,updated_at")
+    .order("name");
+
+  return (
+    <main className="nexus-page">
+      <div className="nexus-header">
+        <div>
+          <h1>User Access</h1>
+          <p>CRM users, roles and sales names.</p>
+        </div>
+      </div>
+      <section className="nexus-card">
+        <div className="nexus-table-wrap">
+          <table className="nexus-table">
+            <thead>
+              <tr><th>Name</th><th>Email</th><th>Role</th><th>Sales Name</th><th>Active</th></tr>
+            </thead>
+            <tbody>
+              {(users || []).map((x) => (
+                <tr key={x.user_id}>
+                  <td>{x.name}</td>
+                  <td>{x.email}</td>
+                  <td>{x.role}</td>
+                  <td>{x.sales_name || "—"}</td>
+                  <td>{x.active ? "Active" : "Inactive"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  );
+}
