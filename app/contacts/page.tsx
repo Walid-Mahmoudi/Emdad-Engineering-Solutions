@@ -1,0 +1,3 @@
+import { createClient } from "@/lib/supabase/server";
+import ContactsClient from "./ContactsClient";
+export default async function ContactsPage(){const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();if(!user)return <main className="nexus-page"><h1>Contacts</h1><p>Unauthorized</p></main>;const {data}=await supabase.from("contacts").select("*").order("updated_at",{ascending:false});return <main className="nexus-page"><div className="nexus-header"><div><h1>Contacts</h1><p>Customer and project contacts.</p></div></div><ContactsClient contacts={data??[]}/></main>}
