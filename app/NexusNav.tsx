@@ -8,7 +8,7 @@ import { Activity, Bell, BriefcaseBusiness, CalendarCheck2, ChartNoAxesCombined,
 type IconComponent = React.ComponentType<{ size?: number; strokeWidth?: number }>;
 type NavItem = [string,string,IconComponent];
 const workspace:NavItem[]=[
- ["/dashboard","Dashboard",LayoutDashboard],[ "/projects","Projects",FolderKanban],[ "/pipeline","Pipeline",ChartNoAxesCombined],
+ ["/dashboard","Dashboard",LayoutDashboard],[ "/sales-performance","Sales Performance",ChartNoAxesCombined],[ "/projects","Projects",FolderKanban],[ "/pipeline","Pipeline",ChartNoAxesCombined],
  ["/focus-projects","Focus Projects",Target],[ "/follow-ups","Follow Ups",CalendarCheck2],[ "/contracts","Contracts",FileCheck2],
  ["/collections","Collections",CircleDollarSign],[ "/deals-done","Deals Done",CheckCircle2],
 ];
