@@ -23,7 +23,7 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
 
   const [history,followups,contract,collections,contacts,attachments]=await Promise.all([
     supabase.from("action_history").select("*").eq("project_id",project.project_id).order("action_date",{ascending:false}).limit(20),
-    supabase.from("follow_ups").select("*").eq("project_id",project.project_id).order("follow_up_date",{ascending:false}).limit(20),
+    supabase.from("follow_ups").select("*").eq("project_id",project.project_id).order("followup_date",{ascending:false}).limit(20),
     supabase.from("contracts").select("*").eq("project_id",project.project_id).order("contract_date",{ascending:false}).limit(1),
     supabase.from("collections").select("*").eq("project_id",project.project_id).order("collection_date",{ascending:false}),
     supabase.from("contacts").select("*").eq("company",project.client||"").order("name"),
@@ -46,7 +46,7 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
       <div className="card kpi"><span>Remaining</span><strong>{money(Math.max(0,contractValue-collected))}</strong></div>
     </section>
 
-    <ProjectActions project={{project_id:project.project_id,current_action:project.current_action||null,estimated_value:project.estimated_value==null?null:Number(project.estimated_value)}} followUps={(followups.data||[]).map(f=>({follow_up_id:f.follow_up_id,follow_up_type:f.follow_up_type||null,result:f.result||null,follow_up_date:f.follow_up_date,completed_at:f.completed_at||null}))} contract={contractRow?{contract_id:contractRow.contract_id,contract_value:Number(contractRow.contract_value||0)}:null} collected={collected} />
+    <ProjectActions project={{project_id:project.project_id,current_action:project.current_action||null,estimated_value:project.estimated_value==null?null:Number(project.estimated_value)}} followUps={(followups.data||[]).map(f=>({followup_id:f.followup_id,followup_type:f.followup_type||null,result:f.result||null,followup_date:f.followup_date,completed_at:f.completed_at||null}))} contract={contractRow?{contract_id:contractRow.contract_id,contract_value:Number(contractRow.contract_value||0)}:null} collected={collected} />
 
     <section className="card">
       <div className="section-head"><h2>Project Information</h2></div>
@@ -68,7 +68,7 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
         {history.data?.length?<div className="timeline">{history.data.map(h=><div className="timeline-item" key={h.action_id}><strong>{h.new_action}</strong><span>{date(h.action_date)}</span><small>{h.previous_action||"Initial stage"}{h.notes?" · "+h.notes:""}</small></div>)}</div>:<p className="muted">No stage history.</p>}
       </section>
       <section className="card"><div className="section-head"><h2>Follow Ups</h2><span className="muted">{followups.data?.length||0}</span></div>
-        {followups.data?.length?<div className="compact-list">{followups.data.map(f=><div className="list-row" key={f.follow_up_id}><div><strong>{f.follow_up_type||"Other"}</strong><span>{f.result||"Pending"}{f.notes?" · "+f.notes:""}</span></div><time>{date(f.follow_up_date)}</time></div>)}</div>:<p className="muted">No follow ups yet.</p>}
+        {followups.data?.length?<div className="compact-list">{followups.data.map(f=><div className="list-row" key={f.followup_id}><div><strong>{f.followup_type||"Other"}</strong><span>{f.result||"Pending"}{f.notes?" · "+f.notes:""}</span></div><time>{date(f.followup_date)}</time></div>)}</div>:<p className="muted">No follow ups yet.</p>}
       </section>
     </div>
 
