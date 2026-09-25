@@ -50,13 +50,13 @@ export default function ProjectActions({project, followUps, contract, collected}
   }
 
   async function completeFU(id:string){
-    const result=window.prompt("Follow-up result:")||""; const notes=window.prompt("Notes (optional):")||"";
+    const type=window.prompt("Follow-up Type (Call / Visit / Email / Meeting / WhatsApp / Other):","Call")||"Call"; const result=window.prompt("Follow-up result:")||""; const notes=window.prompt("Notes (optional):")||"";
     if(!result&&!notes)return;
     await withBusy(async()=>{
       try{
         const nextActionDate=window.prompt("Next Action Date (YYYY-MM-DD, optional):")||"";
         const nextActionType=nextActionDate?(window.prompt("Next Action Type (Call / Visit / Email / Meeting / WhatsApp / Other):")||"Call"):"";
-        await completeFollowUp({followUpId:id,result,notes,nextActionDate:nextActionDate||undefined,nextActionType:nextActionDate?nextActionType:undefined});
+        await completeFollowUp({followUpId:id,type,result,notes,nextActionDate:nextActionDate||undefined,nextActionType:nextActionDate?nextActionType:undefined});
         window.location.reload();
       }catch(e){window.alert(err(e))}
     });
