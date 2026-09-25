@@ -17,7 +17,7 @@ export default function NexusNav({role}:{role:string}){
  const pathname=usePathname(); const [open,setOpen]=useState(false); const admin=role==="Admin"||role==="Manager";
  const active=(href:string)=>pathname===href||pathname.startsWith(href+"/");
  const adminItems:NavItem[]=[];
- if(admin)adminItems.push(["/data-management","Data Management",Database],["/settings","Settings",Settings2]);
+ if(admin)adminItems.push(["/data-management","Data Management",Database],["/automation","Automation",Activity],["/settings","Settings",Settings2]);
  if(role==="Admin")adminItems.push(["/settings/users","User Access",UsersRound]);
  if(admin)adminItems.push(["/audit-log","Audit Log",ShieldCheck]);
  const render=(items:NavItem[])=>items.map(([href,label,Icon])=><Link key={href} href={href} onClick={()=>setOpen(false)} className={active(href)?"is-active":""}><span className="nexus-icon-box"><Icon size={18} strokeWidth={1.9}/></span><span>{label}</span>{label==="Notifications"&&<b className="nexus-nav-dot"/>}{active(href)&&<ChevronRight className="nexus-active-chevron" size={14}/>}</Link>);
