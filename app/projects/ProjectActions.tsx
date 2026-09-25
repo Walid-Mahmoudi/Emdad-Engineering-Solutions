@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { addFollowUp, completeFollowUp } from "@/app/follow-ups/actions";
 import { createContract } from "@/app/contracts/actions";
-import { createCollection } from "@/app/collections/actions";
+import { addCollection } from "@/app/collections/actions";
 
 const STAGES = ["Tender","Tender – High Probability","In Hand","Negotiation","Closed Won","Closed Lost"] as const;
 const TYPES = ["Call","Visit","Email","Meeting","WhatsApp","Other"] as const;
@@ -78,7 +78,7 @@ export default function ProjectActions({project, followUps, contract, collected}
     await withBusy(async()=>{
       try{
         if(!contract)throw new Error("No contract found"); if(!collectionDate||!Number(collectionAmount)||Number(collectionAmount)<=0)throw new Error("Collection date and amount are required");
-        await createCollection({projectId:project.project_id,contractId:contract.contract_id,collectionDate,amount:Number(collectionAmount),paymentMethod,notes:collectionNotes});
+        await addCollection({projectId:project.project_id,contractId:contract.contract_id,date:collectionDate,amount:Number(collectionAmount),paymentMethod,notes:collectionNotes});
         setCollectionMsg("Collection recorded. Refreshing…"); window.location.reload();
       }catch(e){setCollectionMsg(err(e))}
     });
