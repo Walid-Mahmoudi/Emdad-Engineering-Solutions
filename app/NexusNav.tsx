@@ -13,7 +13,7 @@ const workspace:NavItem[]=[
  ["/collections","Collections",CircleDollarSign],[ "/deals-done","Deals Done",CheckCircle2],
 ];
 const customers:NavItem[]=[[ "/clients","Clients",BriefcaseBusiness],[ "/contacts","Contacts",ContactRound],[ "/reports","Reports",Gauge],[ "/notifications","Notifications",Bell]];
-export default function NexusNav({role}:{role:string}){
+export default function NexusNav({role,name,email}:{role:string;name?:string|null;email?:string|null}){
  const pathname=usePathname(); const [open,setOpen]=useState(false); const admin=role==="Admin"||role==="Manager";
  const active=(href:string)=>pathname===href||pathname.startsWith(href+"/");
  const adminItems:NavItem[]=[];
@@ -25,5 +25,5 @@ export default function NexusNav({role}:{role:string}){
  <aside className={"nexus-sidebar"+(open?" is-open":"")}><div className="nexus-brand"><div className="nexus-logo-mark"><span>EN</span></div><div><strong>EMDAD</strong><span>NEXUS</span></div></div>
  <div className="nexus-workspace"><div className="nexus-workspace-icon"><Activity size={15}/></div><div><small>WORKSPACE</small><strong>Sales CRM</strong></div><span className="nexus-online-dot"/></div>
  <nav className="nexus-sidebar-nav"><div className="nexus-nav-label">WORKSPACE</div>{render(workspace)}<div className="nexus-nav-label nexus-nav-label-secondary">CUSTOMERS &amp; REPORTING</div>{render(customers)}{adminItems.length>0&&<><div className="nexus-nav-label nexus-nav-label-secondary">ADMINISTRATION</div>{render(adminItems)}</>}</nav>
- <div className="nexus-sidebar-bottom"><div className="nexus-help"><LifeBuoy size={16}/><span>Need help?</span><span className="nexus-help-kbd">?</span></div><div className="nexus-user-card"><div className="nexus-avatar">W</div><div className="nexus-user-copy"><strong>Walid Mahmoudi</strong><span>{role||"Sales"} · Online</span></div></div></div></aside></>;
+ <div className="nexus-sidebar-bottom"><div className="nexus-help"><LifeBuoy size={16}/><span>Need help?</span><span className="nexus-help-kbd">?</span></div><div className="nexus-user-card"><div className="nexus-avatar">{(name||email||role||"U").trim().charAt(0).toUpperCase()}</div><div className="nexus-user-copy"><strong>{name||email||"User"}</strong><span>{role||"Sales"} · Online</span></div></div></div></aside></>;
 }
