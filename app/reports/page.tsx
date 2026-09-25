@@ -6,7 +6,7 @@ export default async function ReportsPage(){
  if(!user)return <main className="nexus-page"><h1>Reports</h1><p>Unauthorized</p></main>;
  const [{data:projects},{data:followups},{data:contracts},{data:collections}]=await Promise.all([
   s.from("projects").select("project_id,project_name,client,current_action,project_type,location,estimated_value,opportunity_date,next_followup_date"),
-  s.from("follow_ups").select("follow_up_id,project_id,follow_up_date,follow_up_type,result,next_action_date,notes"),
+  s.from("follow_ups").select("followup_id,project_id,followup_date,followup_type,result,next_action_date,notes"),
   s.from("contracts").select("contract_id,project_id,contract_date,contract_value"),
   s.from("collections").select("collection_id,contract_id,project_id,collection_date,amount,payment_method,notes")
  ]);
