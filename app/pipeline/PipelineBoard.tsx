@@ -5,6 +5,7 @@ import Link from "next/link";
 import { moveProjectStage } from "./actions";
 
 const STAGES = ["Tender","Tender – High Probability","In Hand","Negotiation","Closed Won","Closed Lost"] as const;
+const LOST_REASONS = ["Lost to Competitor","Client/Contractor Lost Project","Project Cancelled","Budget Issue","Technical Rejection","Price","Project Completed","Other"] as const;
 type Stage = typeof STAGES[number];
 
 type Project = {
@@ -98,7 +99,7 @@ export default function PipelineBoard({ initialProjects }: { initialProjects: Pr
       <div className="modal" onMouseDown={e=>e.stopPropagation()}>
         <div className="section-head"><div><div className="eyebrow">STAGE CHANGE</div><h2>{modal.stage}</h2><p className="muted">{modal.project.project_name} · {modal.project.client}</p></div><button className="icon-button" onClick={()=>setModal(null)}>×</button></div>
         {modal.stage==="Closed Won" && <><label>Contract Date<input type="date" value={form.contractDate} onChange={e=>setForm({...form,contractDate:e.target.value})}/></label><label>Contract Value<input type="number" min="0" value={form.contractValue} onChange={e=>setForm({...form,contractValue:e.target.value})}/></label></>}
-        {modal.stage==="Closed Lost" && <label>Lost Reason<textarea value={form.lostReason} onChange={e=>setForm({...form,lostReason:e.target.value})}/></label>}
+        {modal.stage==="Closed Lost" && <label>Lost Reason<select value={form.lostReason} onChange={e=>setForm({...form,lostReason:e.target.value})}><option value="">Select a reason…</option>{LOST_REASONS.map(r=><option key={r}>{r}</option>)}</select></label>}
         <label>Notes (optional)<textarea value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/></label>
         <div className="modal-actions"><button className="button secondary" onClick={()=>setModal(null)}>Back</button><button className="button" onClick={confirmModal}>Save Stage</button></div>
       </div>
