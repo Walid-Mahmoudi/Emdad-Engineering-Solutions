@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { addFollowUp, completeFollowUp } from "@/app/follow-ups/actions";
+import { createContract } from "@/app/contracts/actions";
+import { createCollection } from "@/app/collections/actions";
 
 const STAGES = ["Tender","Tender – High Probability","In Hand","Negotiation","Closed Won","Closed Lost"] as const;
 const TYPES = ["Call","Visit","Email","Meeting","WhatsApp","Other"] as const;
@@ -65,10 +67,7 @@ export default function ProjectActions({project, followUps, contract, collected}
     await withBusy(async()=>{
       try{
         if(!contractDate||!Number(contractValue)||Number(contractValue)<=0)throw new Error("Contract date and value are required");
-        const supabase=createClient(); const {data:{user}}=await supabase.auth.getUser(); if(!user)throw new Error("Unauthorized");
-        const {data:p,error:pe}=await supabase.from("projects").select("current_action").eq("project_id",project.project_id).maybeSingle(); if(pe)throw new Error(pe.message); if(p?.current_action!=="Closed Won")throw new Error("Contract requires Closed Won");
-        const id=crypto.randomUUID(); const now=new Date().toISOString();
-        const {error}=await supabase.from("contracts").insert({contract_id:id,project_id:project.project_id,contract_date:contractDate,contract_value:Number(contractValue),created_at:now,updated_at:now}); if(error)throw new Error(error.message);
+        await createContract({projectId:project.project_id,contractDate,contractValue:Number(contractValue)});
         setContractMsg("Contract created. Refreshing…"); window.location.reload();
       }catch(e){setContractMsg(err(e))}
     });
@@ -79,12 +78,7 @@ export default function ProjectActions({project, followUps, contract, collected}
     await withBusy(async()=>{
       try{
         if(!contract)throw new Error("No contract found"); if(!collectionDate||!Number(collectionAmount)||Number(collectionAmount)<=0)throw new Error("Collection date and amount are required");
-        const supabase=createClient(); const {data:{user}}=await supabase.auth.getUser(); if(!user)throw new Error("Unauthorized");
-        const {data:rows,error:re}=await supabase.from("collections").select("amount").eq("contract_id",contract.contract_id); if(re)throw new Error(re.message);
-        const remaining=Number(contract.contract_value)-(rows||[]).reduce((s,r)=>s+Number(r.amount||0),0); if(Number(collectionAmount)>remaining)throw new Error("Collection amount exceeds remaining balance");
-        const id=crypto.randomUUID(); const now=new Date().toISOString();
-        const {error}=await supabase.from("collections").insert({collection_id:id,contract_id:contract.contract_id,project_id:project.project_id,collection_date:collectionDate,amount:Number(collectionAmount),payment_method:paymentMethod||null,notes:collectionNotes||null,created_at:now}); if(error)throw new Error(error.message);
-        await supabase.from("audit_log").insert({log_id:crypto.randomUUID(),timestamp:now,user:user.email||"unknown",action:"Collection Created",entity_type:"Collection",entity_id:id,details:JSON.stringify({project_id:project.project_id,amount:Number(collectionAmount)})});
+        await createCollection({projectId:project.project_id,contractId:contract.contract_id,collectionDate,amount:Number(collectionAmount),paymentMethod,notes:collectionNotes});
         setCollectionMsg("Collection recorded. Refreshing…"); window.location.reload();
       }catch(e){setCollectionMsg(err(e))}
     });
