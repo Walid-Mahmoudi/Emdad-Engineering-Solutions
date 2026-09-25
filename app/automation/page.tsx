@@ -1,5 +1,20 @@
+"use server";
+
 import { createClient } from "@/lib/supabase/server";
-import { BellRing, Clock3, History, Mail, ShieldCheck } from "lucide-react";
+import { BellRing, Clock3, History, Mail, Play, ShieldCheck } from "lucide-react";
+import { revalidatePath } from "next/cache";
+import { runCrmAutomation } from "@/lib/automation";
+
+async function runNow() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+  const { data: profile } = await supabase.from("users").select("role,active").eq("user_id", user.id).maybeSingle();
+  if (!profile?.active || !["Admin", "Manager"].includes(profile.role)) throw new Error("Access restricted to Admin and Manager.");
+  await runCrmAutomation();
+  revalidatePath("/automation");
+  revalidatePath("/notifications");
+}
 
 export default async function AutomationPage(){
   const supabase=await createClient();
@@ -9,10 +24,7 @@ export default async function AutomationPage(){
   if(!profile?.active || !["Admin","Manager"].includes(profile.role)) return <main className="nexus-page"><h1>Automation</h1><p>Access restricted to Admin and Manager.</p></main>;
 
   const [{data:settings},{data:logs},{data:notifications}]=await Promise.all([
-    supabase.from("settings").select("type,value").in("type",[
-      "AUTOMATION_ENABLED","EMAIL_NOTIFICATIONS","REMINDER_HOURS_BEFORE","OVERDUE_ESCALATION",
-      "AUTOMATION_TIMEZONE","CALENDAR_REMINDERS_ENABLED","CALENDAR_REMINDER_DAY_BEFORE","CALENDAR_REMINDER_HOURS"
-    ]).order("type"),
+    supabase.from("settings").select("type,value").in("type",["AUTOMATION_ENABLED","EMAIL_NOTIFICATIONS","REMINDER_HOURS_BEFORE","OVERDUE_ESCALATION","AUTOMATION_TIMEZONE","CALENDAR_REMINDERS_ENABLED","CALENDAR_REMINDER_DAY_BEFORE","CALENDAR_REMINDER_HOURS"]).order("type"),
     supabase.from("automation_log").select("run_id,run_at,job,status,created_count,email_count,details").order("run_at",{ascending:false}).limit(20),
     supabase.from("notifications").select("notification_id,kind,title,project_id,due_date,created_at,read_at").order("created_at",{ascending:false}).limit(100)
   ]);
@@ -26,7 +38,10 @@ export default async function AutomationPage(){
   return <main className="nexus-page automation-workspace">
     <header className="nexus-page-head">
       <div><div className="eyebrow">ADMINISTRATION</div><h1>Automation</h1><p>Operational view of reminders, notifications and automation runs.</p></div>
-      <div className="nexus-head-actions"><span className="workspace-chip"><ShieldCheck size={14}/> {enabled?"Enabled":"Disabled"}</span></div>
+      <div className="nexus-head-actions">
+        <span className="workspace-chip"><ShieldCheck size={14}/> {enabled?"Enabled":"Disabled"}</span>
+        <form action={runNow}><button className="btn" type="submit"><Play size={14}/> Run Now</button></form>
+      </div>
     </header>
 
     <section className="dashboard-stat-grid automation-kpis">
