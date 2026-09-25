@@ -46,6 +46,8 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
       <div className="card kpi"><span>Remaining</span><strong>{money(Math.max(0,contractValue-collected))}</strong></div>
     </section>
 
+    <ProjectActions project={project} followUps={followups.data||[]} contract={contractRow} collected={collected} />
+
     <section className="card">
       <div className="section-head"><h2>Project Information</h2></div>
       <div className="detail-list">
