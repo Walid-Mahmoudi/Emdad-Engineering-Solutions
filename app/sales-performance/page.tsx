@@ -24,8 +24,9 @@ export default async function SalesPerformancePage(){
  const contractByProject=new Map(contracts.map(c=>[String(c.project_id),c]));
  const collectionsByContract=new Map<string,number>();
  if(contracts.length){
-  const {data}=await s.from("collections").select("contract_id,amount").in("contract_id",contracts.map(c=>c.contract_id));
-  for(const c of data??[]) collectionsByContract.set(c.contract_id,(collectionsByContract.get(c.contract_id)||0)+Number(c.amount||0));
+  const {data}=await s.from("collections").select("contract_id,amount,status,collection_date").in("contract_id",contracts.map(c=>c.contract_id));
+  const collectedStatuses=new Set(["collected","paid","تم التحصيل","محصل","محصلة","تحصيل"]);const cancelledStatuses=new Set(["cancelled","canceled","ملغى","ملغاة"]);
+  for(const c of data??[]){const st=String(c.status||"").trim().toLowerCase();if(!cancelledStatuses.has(st)&&(collectedStatuses.has(st)||String(c.collection_date||"").trim()!=="")) collectionsByContract.set(c.contract_id,(collectionsByContract.get(c.contract_id)||0)+Number(c.amount||0));}
  }
  const active=projects.filter(p=>!["Closed Won","Closed Lost"].includes(p.current_action));
  const won=projects.filter(p=>p.current_action==="Closed Won");
