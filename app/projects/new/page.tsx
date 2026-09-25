@@ -35,7 +35,7 @@ export default function NewProjectPage(){
         <label>Consultant<input value={form.consultant} onChange={e=>set("consultant",e.target.value)} placeholder="Consultant"/></label>
         <label>Opportunity Date<input type="date" value={form.opportunityDate} onChange={e=>set("opportunityDate",e.target.value)}/></label>
         <label>Source Case<input value={form.sourceCase} onChange={e=>set("sourceCase",e.target.value)} placeholder="Source / lead case"/></label>
-        <label>Offer Sent<input value={form.offerSent} onChange={e=>set("offerSent",e.target.value)} placeholder="Yes / No / date"/></label>
+        <label>Offer Sent<select value={form.offerSent} onChange={e=>set("offerSent",e.target.value)}><option value="">Not specified</option><option value="Yes">Yes</option><option value="No">No</option></select></label>
         <label className="full">Notes<textarea rows={4} value={form.notes} onChange={e=>set("notes",e.target.value)} placeholder="Commercial notes, requirements, next context…"/></label>
       </div>
       {message&&<p className="form-error">{message}</p>}
