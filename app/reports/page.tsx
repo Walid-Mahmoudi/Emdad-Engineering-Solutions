@@ -1,2 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
-export default async function ReportsPage(){const s=await createClient();const {data:{user}}=await s.auth.getUser();if(!user)return <main className="nexus-page"><h1>Reports</h1><p>Unauthorized</p></main>;const reports=["Projects Report","Pipeline Report","Focus Projects","Follow-Up Report","Contracts & Collections","Client Report"];return <main className="nexus-page"><div className="nexus-header"><div><h1>Reports</h1><p>Operational reports for EMDAD NEXUS.</p></div></div><section className="nexus-card"><div className="nexus-form-grid"><label>From Date<input type="date"/></label><label>To Date<input type="date"/></label><button className="nexus-secondary">Clear Dates</button></div></section><section className="pipeline-kpis">{reports.map(x=><div className="pipeline-kpi" key={x}><span>{x}</span><strong>Open</strong></div>)}</section></main>}
+import ReportsClient from "./ReportsClient";
+export default async function ReportsPage(){
+ const s=await createClient();
+ const {data:{user}}=await s.auth.getUser();
+ if(!user)return <main className="nexus-page"><h1>Reports</h1><p>Unauthorized</p></main>;
+ const [{data:projects},{data:followups},{data:contracts},{data:collections}]=await Promise.all([
+  s.from("projects").select("project_id,project_name,client,current_action,project_type,location,estimated_value,opportunity_date,next_followup_date"),
+  s.from("follow_ups").select("follow_up_id,project_id,follow_up_date,follow_up_type,result,next_action_date,notes"),
+  s.from("contracts").select("contract_id,project_id,contract_date,contract_value"),
+  s.from("collections").select("collection_id,contract_id,project_id,collection_date,amount,payment_method,notes")
+ ]);
+ return <main className="nexus-page reports-workspace"><header className="nexus-page-head"><div><div className="eyebrow">REPORTING CENTER</div><h1>Reports</h1><p>Operational reports from the current EMDAD NEXUS dataset.</p></div><div className="nexus-head-actions"><span className="workspace-chip">{projects?.length||0} projects · {contracts?.length||0} contracts</span></div></header><ReportsClient projects={projects||[]} followups={followups||[]} contracts={contracts||[]} collections={collections||[]}/></main>;
+}
