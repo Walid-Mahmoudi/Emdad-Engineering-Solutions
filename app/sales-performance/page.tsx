@@ -45,9 +45,9 @@ export default async function SalesPerformancePage(){
  const collected=won.reduce((n,p)=>{const c=contractByProject.get(String(p.project_id));return n+(c?collectionsByContract.get(c.contract_id)||0:0)},0);
  const movements=stages.slice(0,4).map(stage=>({stage,count:new Set(history.filter(h=>inWeek(h.action_date)&&h.new_action===stage).map(h=>String(h.project_id))).size}));
  const periodProjects=projects.filter(p=>inWeek(p.created_at)).length;
- const calls=followups.filter(f=>inWeek(f.follow_up_date)&&String(f.follow_up_type||"").toLowerCase()==="call").length;
- const visits=followups.filter(f=>inWeek(f.follow_up_date)&&String(f.follow_up_type||"").toLowerCase()==="visit").length;
- const meetings=followups.filter(f=>inWeek(f.follow_up_date)&&String(f.follow_up_type||"").toLowerCase()==="meeting").length;
+ const calls=followups.filter(f=>inWeek(f.followup_date)&&String(f.followup_type||"").toLowerCase()==="call").length;
+ const visits=followups.filter(f=>inWeek(f.followup_date)&&String(f.followup_type||"").toLowerCase()==="visit").length;
+ const meetings=followups.filter(f=>inWeek(f.followup_date)&&String(f.followup_type||"").toLowerCase()==="meeting").length;
  const focus=new Set(history.filter(h=>inWeek(h.action_date)&&["Tender – High Probability","In Hand"].includes(h.new_action)).map(h=>String(h.project_id))).size;
  const top=active.slice().sort((a,b)=>Number(b.estimated_value||0)-Number(a.estimated_value||0)).slice(0,8);
  return <main className="nexus-page sales-performance-workspace">
