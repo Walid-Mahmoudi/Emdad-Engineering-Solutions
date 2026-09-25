@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, ChevronRight, Clock3, X } from "lucide-react";
+import { CheckCircle2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { addFollowUp, completeFollowUp } from "@/app/follow-ups/actions";
 import { createContract } from "@/app/contracts/actions";
@@ -18,21 +18,22 @@ export default function ProjectActions({project, followUps, contract, collected}
   const [fuResult,setFuResult]=useState(""); const [fuNotes,setFuNotes]=useState(""); const [nextDate,setNextDate]=useState(""); const [nextType,setNextType]=useState("Call"); const [fuMsg,setFuMsg]=useState("");
   const [contractDate,setContractDate]=useState(""); const [contractValue,setContractValue]=useState(String(project.estimated_value||"")); const [contractMsg,setContractMsg]=useState("");
   const [collectionDate,setCollectionDate]=useState(""); const [collectionAmount,setCollectionAmount]=useState(""); const [paymentMethod,setPaymentMethod]=useState(""); const [collectionNotes,setCollectionNotes]=useState(""); const [collectionMsg,setCollectionMsg]=useState("");
-  const [completeOpen,setCompleteOpen]=useState<string|null>(null); const [completeType,setCompleteType]=useState("Call"); const [completeResult,setCompleteResult]=useState(""); const [completeNotes,setCompleteNotes]=useState(""); const [completeNextDate,setCompleteNextDate]=useState(""); const [completeNextType,setCompleteNextType]=useState("Call"); const [completeMsg,setCompleteMsg]=useState("");
+  const [completeOpen,setCompleteOpen]=useState<string|null>(null); const [lostOpen,setLostOpen]=useState(false); const [lostReason,setLostReason]=useState(""); const [completeType,setCompleteType]=useState("Call"); const [completeResult,setCompleteResult]=useState(""); const [completeNotes,setCompleteNotes]=useState(""); const [completeNextDate,setCompleteNextDate]=useState(""); const [completeNextType,setCompleteNextType]=useState("Call"); const [completeMsg,setCompleteMsg]=useState("");
 
   async function withBusy(fn:()=>Promise<void>){setBusy(true);try{await fn()}finally{setBusy(false)}}
   function err(e:unknown){return e instanceof Error?e.message:String(e)}
 
   async function changeStage(){
     setStageMsg("");
+    if(stage==="Closed Lost"){setLostOpen(true);return;}
     await withBusy(async()=>{
       const supabase=createClient();
-      let lostReason: string|undefined;
-      if(stage==="Closed Lost") lostReason=window.prompt("Lost Reason:")||undefined;
+      const reason=stage==="Closed Lost"?lostReason.trim():undefined;
+      if(stage==="Closed Lost"&&!reason) throw new Error("Lost reason is required.");
       const {data,error}=await supabase.rpc("move_project_stage",{
         p_project_id:project.project_id,p_new_action:stage,p_notes:null,
         p_contract_date:stage==="Closed Won"?contractDate:null,
-        p_contract_value:stage==="Closed Won"?Number(contractValue):null,p_lost_reason:lostReason||null
+        p_contract_value:stage==="Closed Won"?Number(contractValue):null,p_lost_reason:reason||null
       });
       if(error) throw new Error(error.message);
       if(data===false) throw new Error("Stage update was not applied.");
@@ -92,7 +93,7 @@ export default function ProjectActions({project, followUps, contract, collected}
       {stage==="Closed Won"&&<label>Contract Value<input type="number" min="0" value={contractValue} onChange={e=>setContractValue(e.target.value)}/></label>}
       <div style={{display:"flex",alignItems:"end"}}><button className="nexus-primary" disabled={busy||stage===project.current_action} onClick={changeStage}>Update Stage</button></div>
     </div>
-    {stageMsg&&<p className="muted">{stageMsg}</p>}
+    {stageMsg&&<p className="muted">{stageMsg}</p>}{lostOpen&&<div className="nexus-modal-backdrop" role="dialog" aria-modal="true"><div className="nexus-modal"><div className="nexus-modal-head"><div><div className="eyebrow">DEAL MANAGEMENT</div><h3>Close as Lost</h3><p>Record the reason so the loss is visible in reporting.</p></div><button className="nexus-icon-button" onClick={()=>setLostOpen(false)} aria-label="Close"><X size={18}/></button></div><div className="nexus-form-grid"><label style={{gridColumn:"1/-1"}}>Lost Reason<textarea value={lostReason} onChange={e=>setLostReason(e.target.value)} rows={4} autoFocus placeholder="Why was the opportunity lost?"/></label></div><div className="nexus-modal-foot"><button className="nexus-secondary" onClick={()=>setLostOpen(false)}>Cancel</button><button className="nexus-primary" disabled={busy||!lostReason.trim()} onClick={()=>{setLostOpen(false);void changeStage()}}>Confirm Closed Lost</button></div></div></div>}
     <hr style={{margin:"20px 0",border:0,borderTop:"1px solid #e5e7eb"}}/>
     <h3>Create Follow-up</h3>
     <div className="nexus-form-grid">
