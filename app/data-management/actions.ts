@@ -28,6 +28,6 @@ export async function restoreDeletedProject(projectId:string){
   const {error}=await s.from("deleted_projects").delete().eq("project_id",projectId);
   if(error) throw new Error(error.message);
   const {data:{user}}=await s.auth.getUser();
-  await s.from("audit_log").insert({user:user?.email||"system",action:"RESTORE_REQUESTED",entity_type:"PROJECT",entity_id:projectId,details:"Deleted-project tombstone removed. The next source sync will restore the source record if it still exists and is in scope."});
+  await s.from("audit_log").insert({user_email:user?.email||"system",action:"RESTORE_REQUESTED",entity_type:"PROJECT",entity_id:projectId,details:"Deleted-project tombstone removed. The next source sync will restore the source record if it still exists and is in scope."});
   return {ok:true,projectId};
 }
