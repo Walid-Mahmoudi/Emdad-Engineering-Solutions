@@ -1,6 +1,38 @@
+"use server";
+
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Bell, CheckCircle2, Clock3 } from "lucide-react";
+import { revalidatePath } from "next/cache";
+
+async function markNotificationRead(formData: FormData) {
+  const notificationId = String(formData.get("notificationId") || "").trim();
+  if (!notificationId) return;
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) return;
+
+  const { error } = await supabase.from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("notification_id", notificationId)
+    .eq("recipient_email", user.email);
+  if (error) throw new Error(error.message);
+  revalidatePath("/notifications");
+}
+
+async function markAllNotificationsRead() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) return;
+
+  const { error } = await supabase.from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("recipient_email", user.email)
+    .is("read_at", null);
+  if (error) throw new Error(error.message);
+  revalidatePath("/notifications");
+}
 
 export default async function NotificationsPage() {
   const supabase = await createClient();
@@ -9,10 +41,11 @@ export default async function NotificationsPage() {
   if (!user) return <main className="nexus-page"><h1>Notifications</h1><p>Unauthorized</p></main>;
 
   const { data: profile } = await supabase.from("users").select("email").eq("user_id", user.id).maybeSingle();
+  const recipientEmail = profile?.email || user.email || "";
   const { data } = await supabase
     .from("notifications")
     .select("notification_id,kind,project_id,title,message,due_date,created_at,read_at")
-    .eq("recipient_email", profile?.email || "")
+    .eq("recipient_email", recipientEmail)
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -29,6 +62,7 @@ export default async function NotificationsPage() {
         </div>
         <div className="nexus-head-actions">
           <span className="workspace-chip"><Bell size={14} /> {unread} unread</span>
+          {unread > 0 && <form action={markAllNotificationsRead}><button className="btn" type="submit">Mark all read</button></form>}
         </div>
       </header>
 
@@ -41,7 +75,7 @@ export default async function NotificationsPage() {
       <section className="nexus-card">
         <div className="nexus-table-wrap">
           <table className="nexus-table">
-            <thead><tr><th>Due</th><th>Kind</th><th>Title</th><th>Project</th><th>Message</th><th>Status</th></tr></thead>
+            <thead><tr><th>Due</th><th>Kind</th><th>Title</th><th>Project</th><th>Message</th><th>Status</th><th></th></tr></thead>
             <tbody>
               {rows.map((row) => (
                 <tr key={row.notification_id}>
@@ -51,9 +85,10 @@ export default async function NotificationsPage() {
                   <td>{row.project_id ? <Link href={"/projects/" + encodeURIComponent(row.project_id)}>{row.project_id}</Link> : "—"}</td>
                   <td>{row.message}</td>
                   <td><span className={row.read_at ? "status-badge" : "status-badge status-warning"}>{row.read_at ? "Read" : "Unread"}</span></td>
+                  <td>{!row.read_at && <form action={markNotificationRead}><input type="hidden" name="notificationId" value={row.notification_id} /><button className="btn" type="submit">Mark read</button></form>}</td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={6}><div className="nexus-empty-inline">No notifications.</div></td></tr>}
+              {rows.length === 0 && <tr><td colSpan={7}><div className="nexus-empty-inline">No notifications.</div></td></tr>}
             </tbody>
           </table>
         </div>
