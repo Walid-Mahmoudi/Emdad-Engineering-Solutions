@@ -46,7 +46,7 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
       <div className="card kpi"><span>Remaining</span><strong>{money(Math.max(0,contractValue-collected))}</strong></div>
     </section>
 
-    <ProjectActions project={project} followUps={followups.data||[]} contract={contractRow} collected={collected} />
+    <ProjectActions project={{project_id:project.project_id,current_action:project.current_action||null,estimated_value:project.estimated_value==null?null:Number(project.estimated_value)}} followUps={(followups.data||[]).map(f=>({follow_up_id:f.follow_up_id,follow_up_type:f.follow_up_type||null,result:f.result||null,follow_up_date:f.follow_up_date,completed_at:f.completed_at||null}))} contract={contractRow?{contract_id:contractRow.contract_id,contract_value:Number(contractRow.contract_value||0)}:null} collected={collected} />
 
     <section className="card">
       <div className="section-head"><h2>Project Information</h2></div>
