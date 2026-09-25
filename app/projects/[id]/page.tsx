@@ -31,7 +31,7 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
   ]);
 
   const contractRow=contract.data?.[0]||null;
-  const collected=(collections.data||[]).reduce((n,c)=>n+Number(c.amount||0),0);
+  const collectedStatuses=new Set(["collected","paid","تم التحصيل","محصل","محصلة","تحصيل"]);\n  const cancelledStatuses=new Set(["cancelled","canceled","ملغى","ملغاة"]);\n  const collected=(collections.data||[]).filter((c:any)=>{const status=String(c.status||"").trim().toLowerCase();const date=String(c.collection_date||"").trim();return !cancelledStatuses.has(status)&&(collectedStatuses.has(status)||date!=="");}).reduce((n,c)=>n+Number(c.amount||0),0);
   const contractValue=Number(contractRow?.contract_value||0);
 
   return <main className="nexus-page project-record">
