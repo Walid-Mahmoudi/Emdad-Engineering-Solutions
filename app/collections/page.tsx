@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { WalletCards, CircleDollarSign, ReceiptText, FileCheck2 } from "lucide-react";
+import CollectionsClient from "./CollectionsClient";
 
 export default async function CollectionsPage() {
  const supabase=await createClient();
@@ -24,9 +25,7 @@ export default async function CollectionsPage() {
   </section>
   <section className="nexus-card">
    <div className="section-head"><div><h2>Collection history</h2><p className="muted">Every recorded payment linked back to its project and contract.</p></div></div>
-   <div className="nexus-table-wrap"><table className="nexus-table"><thead><tr><th>Date</th><th>Project</th><th>Client</th><th>Contract</th><th>Amount</th><th>Method</th><th>Notes</th></tr></thead><tbody>
-   {items.map(c=>{const p=Array.isArray(c.projects)?c.projects[0]:c.projects;return <tr key={c.collection_id}><td>{c.collection_date}</td><td><Link href={"/projects/"+c.project_id} className="finance-project-link"><span><strong>{p?.project_name||c.project_id}</strong><small>{c.project_id}</small></span></Link></td><td>{p?.client||"—"}</td><td>{c.contract_id}</td><td className="money-cell">{Number(c.amount||0).toLocaleString()} EGP</td><td>{c.payment_method||"—"}</td><td>{c.notes||"—"}</td></tr>})}
-   {!items.length&&<tr><td colSpan={7}><div className="nexus-empty-inline">No collections yet.</div></td></tr>}</tbody></table></div>
+   <CollectionsClient items={items}/>
   </section>
  </main>;
 }
