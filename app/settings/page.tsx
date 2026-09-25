@@ -1,52 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-
-export default async function SettingsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return <main className="nexus-page"><h1>Settings</h1><p>Unauthorized</p></main>;
-  }
-
-  const { data: profile } = await supabase
-    .from("users")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!profile || !["Admin", "Manager"].includes(profile.role)) {
-    return <main className="nexus-page"><h1>Settings</h1><p>Access restricted to Admin and Manager.</p></main>;
-  }
-
-  const { data: rows } = await supabase
-    .from("settings")
-    .select("type,value")
-    .order("type");
-
-  return (
-    <main className="nexus-page">
-      <div className="nexus-header">
-        <div>
-          <h1>Settings</h1>
-          <p>EMDAD NEXUS Control Center.</p>
-        </div>
-      </div>
-      <section className="nexus-card">
-        <h2>Current Configuration</h2>
-        <div className="nexus-table-wrap">
-          <table className="nexus-table">
-            <thead><tr><th>Setting</th><th>Value</th></tr></thead>
-            <tbody>
-              {(rows || []).map((x) => (
-                <tr key={x.type}>
-                  <td>{x.type}</td>
-                  <td>{x.value || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
-  );
-}
+import { CalendarClock, Database, ShieldCheck, SlidersHorizontal } from "lucide-react";
+export default async function SettingsPage(){
+ const s=await createClient();const {data:{user}}=await s.auth.getUser();if(!user)return <main className="nexus-page"><h1>Settings</h1><p>Unauthorized</p></main>;
+ const {data:profile}=await s.from("users").select("role").eq("user_id",user.id).maybeSingle();
+ if(!profile||!["Admin","Manager"].includes(profile.role))return <main className="nexus-page"><h1>Settings</h1><p>Access restricted to Admin and Manager.</p></main>;
+ const {data:rows}=await s.from("settings").select("type,value").order("type");
+ const map=new Map((rows??[]).map(x=>[x.type,x.value]));
+ return <main className="nexus-page settings-workspace"><header className="nexus-page-head"><div><div className="eyebrow">ADMINISTRATION</div><h1>Settings</h1><p>EMDAD NEXUS control center and CRM configuration.</p></div><div className="nexus-head-actions"><span className="workspace-chip"><ShieldCheck size={14}/> {profile.role} access</span></div></header>
+ <section className="settings-summary-grid"><div className="nexus-card settings-summary"><Database size={18}/><div><span>CRM</span><strong>{map.get("CRM Name")||"EMDAD NEXUS"}</strong><small>{map.get("Company")||"EMDAD Engineering Solutions"}</small></div></div><div className="nexus-card settings-summary"><CalendarClock size={18}/><div><span>Follow Up</span><strong>{map.get("Default Follow-Up Type")||"Call"}</strong><small>Default after {map.get("Default Follow-Up Days")||"3"} days</small></div></div><div className="nexus-card settings-summary"><SlidersHorizontal size={18}/><div><span>Pipeline</span><strong>6 stages</strong><small>Sunday week start</small></div></div></section>
+ <section className="nexus-card"><div className="section-head"><div><h2>Configuration</h2><p className="muted">Current values preserved from the CRM configuration.</p></div></div><div className="nexus-table-wrap"><table className="nexus-table"><thead><tr><th>Setting</th><th>Value</th></tr></thead><tbody>{(rows??[]).map(x=><tr key={x.type}><td>{x.type}</td><td>{x.value||"—"}</td></tr>)}</tbody></table></div></section></main>
