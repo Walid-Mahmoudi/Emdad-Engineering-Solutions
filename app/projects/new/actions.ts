@@ -33,6 +33,8 @@ export async function createProject(input:{
 
   const adminLike=profile.role==="Admin"||profile.role==="Manager";
   const salesPerson=(adminLike?input.salesPerson?.trim():profile.sales_name?.trim())||null;
+  const offerText=(input.offerSent||"").trim().toLowerCase();
+  const offerSent=offerText ? ["true","yes","y","1","sent","offer sent","done","تم","نعم"].includes(offerText) : false;
 
   const {data:existing,error:existingError}=await supabase.from("projects").select("project_id").eq("project_id",projectId).maybeSingle();
   if(existingError) throw new Error(existingError.message);
@@ -44,7 +46,7 @@ export async function createProject(input:{
     project_name:projectName,
     client:input.client?.trim()||null,
     source_case:input.sourceCase?.trim()||null,
-    offer_sent:input.offerSent?.trim()||null,
+    offer_sent:offerSent,
     estimated_value:input.estimatedValue??null,
     current_action:"Tender",
     project_type:input.projectType?.trim()||null,
