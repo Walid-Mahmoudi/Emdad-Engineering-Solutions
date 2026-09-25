@@ -14,7 +14,7 @@ export default function ProjectActions({project, followUps, contract, collected}
   const [busy,setBusy]=useState(false);
   const [stage,setStage]=useState(project.current_action||"Tender");
   const [stageMsg,setStageMsg]=useState("");
-  const [fuDate,setFuDate]=useState(""); const [fuTime,setFuTime]=useState(""); const [fuType,setFuType]=useState("Call");
+  const [fuDate,setFuDate]=useState(""); const [fuType,setFuType]=useState("Call");
   const [fuResult,setFuResult]=useState(""); const [fuNotes,setFuNotes]=useState(""); const [nextDate,setNextDate]=useState(""); const [nextType,setNextType]=useState("Call"); const [fuMsg,setFuMsg]=useState("");
   const [contractDate,setContractDate]=useState(""); const [contractValue,setContractValue]=useState(String(project.estimated_value||"")); const [contractMsg,setContractMsg]=useState("");
   const [collectionDate,setCollectionDate]=useState(""); const [collectionAmount,setCollectionAmount]=useState(""); const [paymentMethod,setPaymentMethod]=useState(""); const [collectionNotes,setCollectionNotes]=useState(""); const [collectionMsg,setCollectionMsg]=useState("");
@@ -55,7 +55,7 @@ export default function ProjectActions({project, followUps, contract, collected}
     await withBusy(async()=>{
       try{
         if(!fuDate) throw new Error("Follow-up date is required");
-        await addFollowUp({projectId:project.project_id,date:fuDate,time:fuTime,type:fuType,result:fuResult,notes:fuNotes,nextActionDate:nextDate,nextActionType:nextDate?nextType:undefined});
+        await addFollowUp({projectId:project.project_id,date:fuDate,type:fuType,result:fuResult,notes:fuNotes,nextActionDate:nextDate,nextActionType:nextDate?nextType:undefined});
         setFuMsg("Follow-up created. Refreshing…"); window.location.reload();
       }catch(e){setFuMsg(err(e))}
     });
@@ -106,7 +106,7 @@ export default function ProjectActions({project, followUps, contract, collected}
     <hr style={{margin:"20px 0",border:0,borderTop:"1px solid #e5e7eb"}}/>
     <h3>Create Follow-up</h3>
     <div className="nexus-form-grid">
-      <label>Date<input type="date" value={fuDate} onChange={e=>setFuDate(e.target.value)}/></label><label>Time<input type="time" value={fuTime} onChange={e=>setFuTime(e.target.value)}/></label>
+      <label>Date<input type="date" value={fuDate} onChange={e=>setFuDate(e.target.value)}/></label>
       <label>Type<select value={fuType} onChange={e=>setFuType(e.target.value)}>{TYPES.map(t=><option key={t}>{t}</option>)}</select></label>
       <label>Result<input value={fuResult} onChange={e=>setFuResult(e.target.value)} placeholder="Optional"/></label>
       <label>Next Action Date<input type="date" value={nextDate} onChange={e=>setNextDate(e.target.value)}/></label><label>Next Action Type<select value={nextType} onChange={e=>setNextType(e.target.value)}>{TYPES.map(t=><option key={t}>{t}</option>)}</select></label>
