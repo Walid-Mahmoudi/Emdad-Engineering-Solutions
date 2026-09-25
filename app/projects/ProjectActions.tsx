@@ -23,13 +23,9 @@ export default function ProjectActions({project, followUps, contract, collected}
   async function withBusy(fn:()=>Promise<void>){setBusy(true);try{await fn()}finally{setBusy(false)}}
   function err(e:unknown){return e instanceof Error?e.message:String(e)}
 
-  async function changeStage(){
-    setStageMsg("");
-    if(stage==="Closed Lost"){setLostOpen(true);return;}
+  async function persistStage(reason?:string){
     await withBusy(async()=>{
       const supabase=createClient();
-      const reason=stage==="Closed Lost"?lostReason.trim():undefined;
-      if(stage==="Closed Lost"&&!reason) throw new Error("Lost reason is required.");
       const {data,error}=await supabase.rpc("move_project_stage",{
         p_project_id:project.project_id,p_new_action:stage,p_notes:null,
         p_contract_date:stage==="Closed Won"?contractDate:null,
@@ -39,6 +35,19 @@ export default function ProjectActions({project, followUps, contract, collected}
       if(data===false) throw new Error("Stage update was not applied.");
       setStageMsg("Stage updated successfully. Refreshing…"); window.location.reload();
     }).catch(e=>setStageMsg(err(e)));
+  }
+
+  async function changeStage(){
+    setStageMsg("");
+    if(stage==="Closed Lost"){setLostOpen(true);return;}
+    await persistStage();
+  }
+
+  async function confirmLost(){
+    const reason=lostReason.trim();
+    if(!reason){setStageMsg("Lost reason is required.");return;}
+    setLostOpen(false);
+    await persistStage(reason);
   }
 
   async function createFU(){
@@ -93,7 +102,7 @@ export default function ProjectActions({project, followUps, contract, collected}
       {stage==="Closed Won"&&<label>Contract Value<input type="number" min="0" value={contractValue} onChange={e=>setContractValue(e.target.value)}/></label>}
       <div style={{display:"flex",alignItems:"end"}}><button className="nexus-primary" disabled={busy||stage===project.current_action} onClick={changeStage}>Update Stage</button></div>
     </div>
-    {stageMsg&&<p className="muted">{stageMsg}</p>}{lostOpen&&<div className="nexus-modal-backdrop" role="dialog" aria-modal="true"><div className="nexus-modal"><div className="nexus-modal-head"><div><div className="eyebrow">DEAL MANAGEMENT</div><h3>Close as Lost</h3><p>Record the reason so the loss is visible in reporting.</p></div><button className="nexus-icon-button" onClick={()=>setLostOpen(false)} aria-label="Close"><X size={18}/></button></div><div className="nexus-form-grid"><label style={{gridColumn:"1/-1"}}>Lost Reason<textarea value={lostReason} onChange={e=>setLostReason(e.target.value)} rows={4} autoFocus placeholder="Why was the opportunity lost?"/></label></div><div className="nexus-modal-foot"><button className="nexus-secondary" onClick={()=>setLostOpen(false)}>Cancel</button><button className="nexus-primary" disabled={busy||!lostReason.trim()} onClick={()=>{setLostOpen(false);void changeStage()}}>Confirm Closed Lost</button></div></div></div>}
+    {stageMsg&&<p className="muted">{stageMsg}</p>}{lostOpen&&<div className="nexus-modal-backdrop" role="dialog" aria-modal="true"><div className="nexus-modal"><div className="nexus-modal-head"><div><div className="eyebrow">DEAL MANAGEMENT</div><h3>Close as Lost</h3><p>Record the reason so the loss is visible in reporting.</p></div><button className="nexus-icon-button" onClick={()=>setLostOpen(false)} aria-label="Close"><X size={18}/></button></div><div className="nexus-form-grid"><label style={{gridColumn:"1/-1"}}>Lost Reason<textarea value={lostReason} onChange={e=>setLostReason(e.target.value)} rows={4} autoFocus placeholder="Why was the opportunity lost?"/></label></div><div className="nexus-modal-foot"><button className="nexus-secondary" onClick={()=>setLostOpen(false)}>Cancel</button><button className="nexus-primary" disabled={busy||!lostReason.trim()} onClick={confirmLost}>Confirm Closed Lost</button></div></div></div>}
     <hr style={{margin:"20px 0",border:0,borderTop:"1px solid #e5e7eb"}}/>
     <h3>Create Follow-up</h3>
     <div className="nexus-form-grid">
