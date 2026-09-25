@@ -1,17 +1,86 @@
 "use client";
 
 import Link from "next/link";
-import {usePathname} from "next/navigation";
-import {useState} from "react";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import {
+  Activity, Bell, BriefcaseBusiness, CalendarCheck2, ChartNoAxesCombined,
+  CheckCircle2, CircleDollarSign, ClipboardList, ContactRound, Database,
+  FileCheck2, FolderKanban, Gauge, LayoutDashboard, LifeBuoy, Menu,
+  PanelLeftClose, Settings2, ShieldCheck, Target, UsersRound, X
+} from "lucide-react";
 
-type IconName="dashboard"|"projects"|"pipeline"|"focus"|"follow"|"contracts"|"collections"|"deals"|"clients"|"contacts"|"reports"|"notifications"|"data"|"settings"|"users"|"audit";
-const paths:Record<IconName,string>={
-dashboard:"M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-18v6h8V3h-8Z",projects:"M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18.5v-13ZM8 7h8M8 11h8M8 15h5",pipeline:"M4 5h16M4 12h16M4 19h16M8 3v4M16 10v4M11 17v4",focus:"M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z",follow:"M7 3v3M17 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm3 8 2 2 4-4",contracts:"M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm9 0v5h4M8 12h8M8 16h6",collections:"M5 6h14v12H5zM8 9h8M8 13h5M8 16h3",deals:"M4 7h16v12H4zM8 7V5h8v2M8 12h8M10 16h4",clients:"M16 20v-1.5A3.5 3.5 0 0 0 12.5 15h-5A3.5 3.5 0 0 0 4 18.5V20M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm6-7a3 3 0 1 1 0 6M17 15a3 3 0 0 1 3 3v2",contacts:"M5 5h14v14H5zM8 9h8M8 13h5M8 17h3",reports:"M4 19V5M4 19h16M8 16v-5M12 16V8M16 16V6",notifications:"M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4",data:"M4 5h16v14H4zM8 9h8M8 13h8M8 17h5",settings:"M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a8 8 0 0 0-2-1.2L14.2 3h-4l-.3 2.7a8 8 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.5A7 7 0 0 0 5.4 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-1c.6.5 1.3.9 2 1.2l.3 2.7h4l.3-2.7c.7-.3 1.4-.7 2-1.2l2.4 1 2.4-1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z",users:"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8",audit:"M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"};
-function Icon({name}:{name:IconName}){return <svg className="nexus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]}/></svg>}
+type IconComponent = React.ComponentType<{ size?: number; strokeWidth?: number }>;
+type NavItem = [string, string, IconComponent];
+
+const mainItems: NavItem[] = [
+  ["/dashboard","Dashboard",LayoutDashboard],
+  ["/projects","Projects",FolderKanban],
+  ["/pipeline","Pipeline",ChartNoAxesCombined],
+  ["/focus-projects","Focus Projects",Target],
+  ["/follow-ups","Follow Ups",CalendarCheck2],
+  ["/contracts","Contracts",FileCheck2],
+  ["/collections","Collections",CircleDollarSign],
+  ["/deals-done","Deals Done",CheckCircle2],
+  ["/clients","Clients",BriefcaseBusiness],
+  ["/contacts","Contacts",ContactRound],
+  ["/reports","Reports",Gauge],
+  ["/notifications","Notifications",Bell],
+];
+
 export default function NexusNav({role}:{role:string}){
- const pathname=usePathname();const [open,setOpen]=useState(false);
- const items:[string,string,IconName][]=[["/dashboard","Dashboard","dashboard"],["/projects","Projects","projects"],["/pipeline","Pipeline","pipeline"],["/focus-projects","Focus Projects","focus"],["/follow-ups","Follow Ups","follow"],["/contracts","Contracts","contracts"],["/collections","Collections","collections"],["/deals-done","Deals Done","deals"],["/clients","Clients","clients"],["/contacts","Contacts","contacts"],["/reports","Reports","reports"],["/notifications","Notifications","notifications"]];
- const admin=role==="Admin"||role==="Manager";if(admin)items.push(["/data-management","Data Management","data"],["/settings","Settings","settings"]);if(role==="Admin")items.push(["/settings/users","User Access","users"]);if(admin)items.push(["/audit-log","Audit Log","audit"]);
- const active=(h:string)=>pathname===h||pathname.startsWith(h+"/");
- return <><button className="nexus-mobile-toggle" onClick={()=>setOpen(v=>!v)} aria-label="Open navigation"><span/><span/><span/></button>{open&&<button className="nexus-sidebar-overlay" onClick={()=>setOpen(false)} aria-label="Close navigation"/>}<aside className={"nexus-sidebar"+(open?" is-open":"")}><div className="nexus-brand"><div className="nexus-logo-mark">E</div><div><strong>EMDAD</strong><span>NEXUS</span></div></div><div className="nexus-workspace"><i/><div><small>WORKSPACE</small><strong>Sales CRM</strong></div></div><nav className="nexus-sidebar-nav"><div className="nexus-nav-label">MAIN MENU</div>{items.slice(0,12).map(([href,label,icon])=><Link key={href} href={href} onClick={()=>setOpen(false)} className={active(href)?"is-active":""}><Icon name={icon}/><span>{label}</span>{label==="Notifications"&&<b className="nexus-nav-dot"/>}</Link>)}{admin&&<div className="nexus-nav-label nexus-nav-label-secondary">ADMINISTRATION</div>}{items.slice(12).map(([href,label,icon])=><Link key={href} href={href} onClick={()=>setOpen(false)} className={active(href)?"is-active":""}><Icon name={icon}/><span>{label}</span></Link>)}</nav><div className="nexus-sidebar-bottom"><div className="nexus-user-card"><div className="nexus-avatar">W</div><div><strong>Walid Mahmoudi</strong><span>{role||"Sales"}</span></div><i/></div></div></aside></>;
+  const pathname=usePathname();
+  const [open,setOpen]=useState(false);
+  const admin=role==="Admin"||role==="Manager";
+  const items:NavItem[]=[...mainItems];
+  if(admin) items.push(["/data-management","Data Management",Database],["/settings","Settings",Settings2]);
+  if(role==="Admin") items.push(["/settings/users","User Access",UsersRound]);
+  if(admin) items.push(["/audit-log","Audit Log",ShieldCheck]);
+  const active=(href:string)=>pathname===href||pathname.startsWith(href+"/");
+
+  return <>
+    <button className="nexus-mobile-toggle" onClick={()=>setOpen(v=>!v)} aria-label="Open navigation">
+      {open?<X size={21}/>:<Menu size={21}/>}
+    </button>
+    {open&&<button className="nexus-sidebar-overlay" onClick={()=>setOpen(false)} aria-label="Close navigation"/>}
+    <aside className={"nexus-sidebar"+(open?" is-open":"")}>
+      <div className="nexus-brand">
+        <div className="nexus-logo-mark"><span>EN</span></div>
+        <div><strong>EMDAD</strong><span>NEXUS</span></div>
+      </div>
+
+      <div className="nexus-workspace">
+        <div className="nexus-workspace-icon"><Activity size={15}/></div>
+        <div><small>WORKSPACE</small><strong>Sales CRM</strong></div>
+        <span className="nexus-online-dot"/>
+      </div>
+
+      <nav className="nexus-sidebar-nav">
+        <div className="nexus-nav-label">WORKSPACE</div>
+        {items.slice(0,12).map(([href,label,Icon])=>
+          <Link key={href} href={href} onClick={()=>setOpen(false)} className={active(href)?"is-active":""} title={label}>
+            <span className="nexus-icon-box"><Icon size={18} strokeWidth={1.9}/></span>
+            <span>{label}</span>
+            {label==="Notifications"&&<b className="nexus-nav-dot"/>}
+          </Link>
+        )}
+        {admin&&<div className="nexus-nav-label nexus-nav-label-secondary">ADMINISTRATION</div>}
+        {items.slice(12).map(([href,label,Icon])=>
+          <Link key={href} href={href} onClick={()=>setOpen(false)} className={active(href)?"is-active":""} title={label}>
+            <span className="nexus-icon-box"><Icon size={18} strokeWidth={1.9}/></span>
+            <span>{label}</span>
+          </Link>
+        )}
+      </nav>
+
+      <div className="nexus-sidebar-bottom">
+        <div className="nexus-help"><LifeBuoy size={16}/><span>Need help?</span><span className="nexus-help-kbd">?</span></div>
+        <div className="nexus-user-card">
+          <div className="nexus-avatar">W</div>
+          <div className="nexus-user-copy"><strong>Walid Mahmoudi</strong><span>{role||"Sales"}</span></div>
+          <PanelLeftClose size={15} className="nexus-user-menu"/>
+        </div>
+      </div>
+    </aside>
+  </>;
 }
