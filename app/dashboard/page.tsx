@@ -1,15 +1,38 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { ArrowUpRight, BriefcaseBusiness, CalendarClock, CircleDollarSign, FolderKanban, Plus, Target, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+const stages=["Tender","Tender – High Probability","In Hand","Negotiation"];
+
+function money(v:number){return new Intl.NumberFormat("en-EG",{style:"currency",currency:"EGP",maximumFractionDigits:0}).format(v||0)}
 
 export default async function Dashboard(){
-  const supabase=await createClient();
-  const {data:{user}}=await supabase.auth.getUser();
-  if(!user) redirect("/login");
-  const {data:profile}=await supabase.from("users").select("name,email,role,active,sales_name").eq("user_id",user.id).maybeSingle();
-  if(!profile || !profile.active) return <main className="shell"><section className="card"><div className="eyebrow">EMDAD NEXUS</div><h1>Access pending</h1><p>Your account is authenticated, but no active CRM user profile is assigned yet.</p><p className="muted">{user.email}</p></section></main>;
-  const {data:projects}=await supabase.from("projects").select("project_id,project_name,client,estimated_value,current_action,next_followup_date,sales_person").order("updated_at",{ascending:false}).limit(5);
-  const owner = profile.sales_name ? profile.role + " · " + profile.sales_name : profile.role;
-  return <main className="shell"><header className="topbar"><div><div className="eyebrow">EMDAD ENGINEERING SOLUTIONS</div><h1>EMDAD NEXUS</h1></div><div className="user">{profile.name||profile.email}<small>{owner}</small></div></header><section className="grid"><div className="stat card"><span>Visible Projects</span><strong>{projects?.length??0}</strong></div><div className="card"><span className="eyebrow">SESSION</span><h2>Authenticated</h2><p className="muted">{profile.email}</p></div></section><section className="card"><h2>Recent Projects</h2>{projects?.length?<div className="projects">{projects.map(p=><div className="project" key={p.project_id}><div><strong>{p.project_name}</strong><small>{p.client}</small></div><span>{p.current_action}</span></div>)}</div>:<p className="muted">No projects are available for this user scope.</p>}</section></main>;
+ const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();if(!user)redirect("/login");
+ const {data:profile}=await supabase.from("users").select("name,email,role,active,sales_name").eq("user_id",user.id).maybeSingle();
+ if(!profile?.active)return <main className="nexus-page"><section className="nexus-empty"><div className="eyebrow">EMDAD NEXUS</div><h1>Access pending</h1><p>Your account is authenticated, but no active CRM user profile is assigned yet.</p></section></main>;
+ const {data:projects}=await supabase.from("projects").select("project_id,project_name,client,estimated_value,current_action,next_followup_date,updated_at").order("updated_at",{ascending:false});
+ const rows=projects||[];const active=rows.filter(p=>stages.includes(p.current_action||""));const pipelineValue=active.reduce((n,p)=>n+Number(p.estimated_value||0),0);
+ const today=new Date().toISOString().slice(0,10);const due=active.filter(p=>p.next_followup_date&&String(p.next_followup_date).slice(0,10)<=today).length;
+ return <main className="nexus-page">
+   <header className="nexus-page-head">
+    <div><div className="eyebrow">SALES WORKSPACE</div><h1>Good to see you, {profile.name?.split(" ")[0]||"Walid"}</h1><p>Here’s what needs your attention today.</p></div>
+    <div className="nexus-head-actions"><Link href="/projects" className="nexus-secondary"><FolderKanban size={16}/> View Projects</Link><Link href="/projects/new" className="nexus-primary"><Plus size={16}/> New Project</Link></div>
+   </header>
+   <section className="dashboard-stat-grid">
+    <div className="nexus-stat-card"><div className="nexus-stat-icon blue"><FolderKanban size={18}/></div><div><span>Active Projects</span><strong>{active.length}</strong><small>Across your pipeline</small></div><ArrowUpRight size={16}/></div>
+    <div className="nexus-stat-card"><div className="nexus-stat-icon green"><CircleDollarSign size={18}/></div><div><span>Pipeline Value</span><strong>{money(pipelineValue)}</strong><small>Estimated active value</small></div><TrendingUp size={16}/></div>
+    <div className="nexus-stat-card"><div className="nexus-stat-icon amber"><CalendarClock size={18}/></div><div><span>Follow Ups Due</span><strong>{due}</strong><small>Today or overdue</small></div><ArrowUpRight size={16}/></div>
+    <div className="nexus-stat-card"><div className="nexus-stat-icon purple"><Target size={18}/></div><div><span>Negotiations</span><strong>{active.filter(p=>p.current_action==="Negotiation").length}</strong><small>Late-stage opportunities</small></div><ArrowUpRight size={16}/></div>
+   </section>
+   <div className="dashboard-grid">
+    <section className="nexus-panel"><div className="nexus-panel-head"><div><span className="eyebrow">PIPELINE</span><h2>Stage overview</h2></div><Link href="/pipeline">Open pipeline <ArrowUpRight size={14}/></Link></div>
+      <div className="stage-list">{stages.map((s,i)=><div className="stage-row" key={s}><div className="stage-name"><span className={"stage-dot s"+i}/><span>{s}</span></div><strong>{active.filter(p=>p.current_action===s).length}</strong><span className="stage-value">{money(active.filter(p=>p.current_action===s).reduce((n,p)=>n+Number(p.estimated_value||0),0))}</span></div>)}</div>
+    </section>
+    <section className="nexus-panel"><div className="nexus-panel-head"><div><span className="eyebrow">RECENT</span><h2>Latest projects</h2></div><Link href="/projects">View all <ArrowUpRight size={14}/></Link></div>
+      <div className="recent-projects">{active.slice(0,6).map(p=><Link href={"/projects/"+encodeURIComponent(p.project_id)} className="recent-project" key={p.project_id}><div className="recent-project-icon"><BriefcaseBusiness size={16}/></div><div><strong>{p.project_name||"Untitled project"}</strong><span>{p.client||"No client"}</span></div><div className="recent-project-meta"><b>{money(Number(p.estimated_value)||0)}</b><small>{p.current_action}</small></div></Link>)}{!active.length&&<div className="nexus-empty-inline">No active projects are available.</div>}</div>
+    </section>
+   </div>
+ </main>;
 }
