@@ -1,69 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { ArrowUpRight, CircleDollarSign, FileCheck2, WalletCards } from "lucide-react";
 
-export default async function DealsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return <main className="nexus-page"><h1>Deals Done</h1><p>Unauthorized</p></main>;
-
-  const { data: contracts } = await supabase
-    .from("contracts")
-    .select("contract_id,project_id,contract_date,contract_value,projects(project_id,project_name,client,current_action)")
-    .order("contract_date", { ascending: false });
-
-  const contractRows = contracts || [];
-  const ids = contractRows.map((c) => c.contract_id);
-  let collections: { contract_id: string; amount: number | null }[] = [];
-
-  if (ids.length) {
-    const r = await supabase.from("collections").select("contract_id,amount").in("contract_id", ids);
-    collections = (r.data || []) as { contract_id: string; amount: number | null }[];
-  }
-
-  const rows = contractRows.map((c) => {
-    const project = Array.isArray(c.projects) ? c.projects[0] : c.projects;
-    const collected = collections
-      .filter((x) => x.contract_id === c.contract_id)
-      .reduce((s, x) => s + Number(x.amount || 0), 0);
-    const value = Number(c.contract_value || 0);
-    return { ...c, project, collected, remaining: Math.max(0, value - collected), pct: value ? Math.round(collected / value * 100) : 0 };
-  });
-
-  const totalValue = rows.reduce((s, r) => s + Number(r.contract_value || 0), 0);
-  const totalCollected = rows.reduce((s, r) => s + r.collected, 0);
-
-  return (
-    <main className="nexus-page">
-      <div className="nexus-header"><div><h1>Deals Done</h1><p>Closed Won contracts and collection progress.</p></div></div>
-      <div className="pipeline-kpis">
-        <div className="pipeline-kpi"><span>Deals Done</span><strong>{rows.length}</strong></div>
-        <div className="pipeline-kpi"><span>Contract Value</span><strong>{totalValue.toLocaleString()} EGP</strong></div>
-        <div className="pipeline-kpi"><span>Collected</span><strong>{totalCollected.toLocaleString()} EGP</strong></div>
-        <div className="pipeline-kpi"><span>Remaining</span><strong>{Math.max(0, totalValue - totalCollected).toLocaleString()} EGP</strong></div>
-      </div>
-      <section className="nexus-card">
-        <div className="nexus-table-wrap">
-          <table className="nexus-table">
-            <thead><tr><th>ID</th><th>Project</th><th>Client</th><th>Contract Date</th><th>Contract Value</th><th>Collected</th><th>Remaining</th><th>%</th></tr></thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.contract_id}>
-                  <td>{r.project_id}</td>
-                  <td><Link href={"/projects/" + encodeURIComponent(r.project_id)}>{r.project?.project_name || "—"}</Link></td>
-                  <td>{r.project?.client || "—"}</td>
-                  <td>{r.contract_date}</td>
-                  <td>{Number(r.contract_value || 0).toLocaleString()} EGP</td>
-                  <td>{r.collected.toLocaleString()} EGP</td>
-                  <td>{r.remaining.toLocaleString()} EGP</td>
-                  <td>{r.pct}%</td>
-                </tr>
-              ))}
-              {!rows.length && <tr><td colSpan={8}>No closed deals yet.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
-  );
+function money(v:number){return Number(v||0).toLocaleString()+" EGP";}
+export default async function DealsPage(){
+ const s=await createClient();const {data:{user}}=await s.auth.getUser();
+ if(!user)return <main className="nexus-page"><h1>Deals Done</h1><p>Unauthorized</p></main>;
+ const {data:contracts}=await s.from("contracts").select("contract_id,project_id,contract_date,contract_value,projects(project_id,project_name,client,current_action,sales_person)").order("contract_date",{ascending:false});
+ const rows=contracts??[];const ids=rows.map(c=>c.contract_id);
+ const {data:cols}=ids.length?await s.from("collections").select("contract_id,amount").in("contract_id",ids):{data:[]};
+ const collectedBy=new Map<string,number>();for(const c of cols??[])collectedBy.set(c.contract_id,(collectedBy.get(c.contract_id)||0)+Number(c.amount||0));
+ const view=rows.map(c=>{const p=Array.isArray(c.projects)?c.projects[0]:c.projects;const value=Number(c.contract_value||0),collected=collectedBy.get(c.contract_id)||0;return {...c,p,value,collected,remaining:Math.max(0,value-collected),pct:value?Math.min(100,Math.round(collected/value*100)):0}});
+ const total=view.reduce((n,r)=>n+r.value,0), collected=view.reduce((n,r)=>n+r.collected,0);
+ return <main className="nexus-page deals-workspace">
+  <header className="nexus-page-head"><div><div className="eyebrow">REVENUE & FINANCE</div><h1>Deals Done</h1><p>Closed Won portfolio with contract value and collection progress.</p></div><div className="nexus-head-actions"><Link href="/contracts" className="nexus-secondary"><FileCheck2 size={14}/> Contracts</Link><Link href="/collections" className="nexus-primary"><ArrowUpRight size={14}/> Collections</Link></div></header>
+  <section className="dashboard-stat-grid finance-kpis"><div className="nexus-stat-card"><div className="nexus-stat-icon blue"><FileCheck2 size={18}/></div><div><span>Deals Done</span><strong>{view.length}</strong><small>Closed Won contracts</small></div></div><div className="nexus-stat-card"><div className="nexus-stat-icon purple"><CircleDollarSign size={18}/></div><div><span>Contract Value</span><strong>{money(total)}</strong><small>Signed value</small></div></div><div className="nexus-stat-card"><div className="nexus-stat-icon green"><WalletCards size={18}/></div><div><span>Collected</span><strong>{money(collected)}</strong><small>Recorded collections</small></div></div><div className="nexus-stat-card"><div className="nexus-stat-icon amber"><CircleDollarSign size={18}/></div><div><span>Remaining</span><strong>{money(Math.max(0,total-collected))}</strong><small>Outstanding balance</small></div></div></section>
+  <section className="nexus-card contract-workspace-card"><div className="section-head"><div><h2>Closed Won portfolio</h2><p className="muted">Each deal links directly to its Project 360 record.</p></div></div><div className="nexus-table-wrap"><table className="nexus-table"><thead><tr><th>Project</th><th>Client</th><th>Sales Person</th><th>Contract Date</th><th>Contract Value</th><th>Collected</th><th>Remaining</th><th>Collection</th></tr></thead><tbody>{view.map(r=><tr key={r.contract_id}><td><Link href={"/projects/"+encodeURIComponent(r.project_id)} className="finance-project-link"><FileCheck2 size={14}/><span><strong>{r.p?.project_name||r.project_id}</strong><small>{r.project_id}</small></span></Link></td><td>{r.p?.client||"—"}</td><td>{r.p?.sales_person||"—"}</td><td>{r.contract_date||"—"}</td><td>{money(r.value)}</td><td>{money(r.collected)}</td><td>{money(r.remaining)}</td><td><div className="collection-progress"><div><span>{r.pct}% collected</span><strong>{r.remaining===0?"Complete":"Open"}</strong></div><i><b style={{width:r.pct+"%"}}/></i></div></td></tr>)}{!view.length&&<tr><td colSpan={8}><div className="nexus-empty-inline">No Closed Won deals yet.</div></td></tr>}</tbody></table></div></section>
+ </main>;
 }
