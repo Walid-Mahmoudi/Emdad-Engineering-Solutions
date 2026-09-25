@@ -9,7 +9,7 @@ async function authContext(){
   return {supabase,user};
 }
 async function audit(supabase:any,user:any,action:string,entityType:string,entityId:string,details:any){
-  await supabase.from("audit_log").insert({log_id:crypto.randomUUID(),timestamp:new Date().toISOString(),user:user.email||"unknown",action,entity_type:entityType,entity_id:entityId,details:JSON.stringify(details)});
+  await supabase.from("audit_log").insert({log_id:crypto.randomUUID(),timestamp:new Date().toISOString(),user_email:user.email||"unknown",action,entity_type:entityType,entity_id:entityId,details:details});
 }
 export async function createContract(input:{projectId:string;contractDate:string;contractValue:number}){
   if(!input.contractDate||!Number.isFinite(input.contractValue)||input.contractValue<=0) throw new Error("Contract date and a positive contract value are required");
