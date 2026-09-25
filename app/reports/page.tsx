@@ -8,7 +8,7 @@ export default async function ReportsPage(){
   s.from("projects").select("project_id,project_name,client,current_action,project_type,location,estimated_value,opportunity_date,next_followup_date"),
   s.from("follow_ups").select("followup_id,project_id,followup_date,followup_type,result,next_action_date,notes"),
   s.from("contracts").select("contract_id,project_id,contract_date,contract_value"),
-  s.from("collections").select("collection_id,contract_id,project_id,collection_date,amount,payment_method,notes")
+  s.from("collections").select("collection_id,contract_id,project_id,collection_date,due_date,amount,payment_method,status,quarter,notes")
  ]);
  return <main className="nexus-page reports-workspace"><header className="nexus-page-head"><div><div className="eyebrow">REPORTING CENTER</div><h1>Reports</h1><p>Operational reports from the current EMDAD NEXUS dataset.</p></div><div className="nexus-head-actions"><span className="workspace-chip">{projects?.length||0} projects · {contracts?.length||0} contracts</span></div></header><ReportsClient projects={projects||[]} followups={followups||[]} contracts={contracts||[]} collections={collections||[]}/></main>;
 }
