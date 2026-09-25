@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import ProjectActions from "../ProjectActions";
+import { ArrowLeft, Building2, MapPin, UserRound, CalendarClock, CircleDollarSign, FileText, Paperclip, History, Phone } from "lucide-react";
 
 export const dynamic="force-dynamic";
 
@@ -33,16 +34,15 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
   const collected=(collections.data||[]).reduce((n,c)=>n+Number(c.amount||0),0);
   const contractValue=Number(contractRow?.contract_value||0);
 
-  return <main className="shell">
-    <header className="topbar">
-      <div><Link className="back-link" href="/projects">← Projects</Link><div className="eyebrow">PROJECT 360</div><h1>{project.project_name||"Untitled Project"}</h1><p className="muted">{project.client||"No client"} · {project.location||"No location"}</p></div>
-      <span className="badge">{project.current_action||"—"}</span>
+  return <main className="nexus-page project-record">
+    <header className="record-header">
+      <div className="record-breadcrumb"><Link href="/projects"><ArrowLeft size={14}/> Projects</Link><span>/</span><span>{project.project_id}</span></div><div className="record-title-row"><div className="record-title-icon"><Building2 size={20}/></div><div><div className="eyebrow">PROJECT 360 · OPPORTUNITY</div><h1>{project.project_name||"Untitled Project"}</h1><p><span><Building2 size={13}/>{project.client||"No client"}</span><span><MapPin size={13}/>{project.location||"No location"}</span><span><UserRound size={13}/>{project.sales_person||"Unassigned"}</span></p></div><span className="record-stage">{project.current_action||"—"}</span></div>
     </header>
 
-    <section className="kpi-grid">
-      <div className="card kpi"><span>Estimated Value</span><strong>{money(project.estimated_value)}</strong></div>
+    <section className="record-kpis">
+      <div><span>Estimated Value</span><strong>{money(project.estimated_value)}</strong></div>
       <div className="card kpi"><span>Contract Value</span><strong>{money(contractValue)}</strong></div>
-      <div className="card kpi"><span>Collected</span><strong>{money(collected)}</strong><small>{contractValue?Math.round(collected/contractValue*100)+"% collected":"—"}</small></div>
+      <div className="card kpi"><span>Collected</span><strong>{money(collected)}</strong><small>{contractValue?Math.round(collected/contractValue*100)+"% collected":"No contract yet"}</small></div>
       <div className="card kpi"><span>Remaining</span><strong>{money(Math.max(0,contractValue-collected))}</strong></div>
     </section>
 
