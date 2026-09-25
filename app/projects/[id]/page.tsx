@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
+import ProjectActions from "../ProjectActions";
 
 export const dynamic="force-dynamic";
 
