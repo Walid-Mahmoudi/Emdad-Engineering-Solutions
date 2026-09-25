@@ -16,6 +16,7 @@ export async function addFollowUp(input:{
   nextActionDate?:string; nextActionType?:string;
 }) {
   if(!TYPES.includes(input.type as typeof TYPES[number])) throw new Error("Invalid follow-up type");
+  if(input.nextActionDate && !input.nextActionType) throw new Error("Next action type is required when a next action date is set");
   if(input.nextActionDate && input.nextActionType && !TYPES.includes(input.nextActionType as typeof TYPES[number])) throw new Error("Invalid next action type");
   if(!input.date) throw new Error("Follow-up date is required");
 
@@ -54,6 +55,7 @@ export async function completeFollowUp(input:{
 }) {
   if(!TYPES.includes(input.type as typeof TYPES[number])) throw new Error("Invalid follow-up type");
   if(!input.result && !input.notes) throw new Error("Result or Notes is required");
+  if(input.nextActionDate && !input.nextActionType) throw new Error("Next action type is required when a next action date is set");
   if(input.nextActionDate && input.nextActionType && !TYPES.includes(input.nextActionType as typeof TYPES[number])) throw new Error("Invalid next action type");
 
   const supabase=await createClient();
