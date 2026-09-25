@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { addFollowUp, completeFollowUp } from "@/app/follow-ups/actions";
 
 const STAGES = ["Tender","Tender – High Probability","In Hand","Negotiation","Closed Won","Closed Lost"] as const;
 const TYPES = ["Call","Visit","Email","Meeting","WhatsApp","Other"] as const;
@@ -40,13 +41,7 @@ export default function ProjectActions({project, followUps, contract, collected}
     await withBusy(async()=>{
       try{
         if(!fuDate) throw new Error("Follow-up date is required");
-        const supabase=createClient(); const {data:{user}}=await supabase.auth.getUser(); if(!user) throw new Error("Unauthorized");
-        const id=crypto.randomUUID(); const now=new Date().toISOString();
-        const {error}=await supabase.from("follow_ups").insert({follow_up_id:id,project_id:project.project_id,follow_up_date:fuDate,follow_up_time:fuTime||null,follow_up_type:fuType,result:fuResult||null,next_action_date:nextDate||null,next_action_type:nextDate?nextType:null,next_action_status:nextDate?"Pending":null,notes:fuNotes||null,created_at:now});
-        if(error) throw new Error(error.message);
-        const {error:pe}=await supabase.from("projects").update({last_followup_date:fuDate,next_followup_date:nextDate||null,updated_at:now}).eq("project_id",project.project_id);
-        if(pe) throw new Error(pe.message);
-        await supabase.from("audit_log").insert({log_id:crypto.randomUUID(),timestamp:now,user:user.email||"unknown",action:"Follow Up Created",entity_type:"Follow Up",entity_id:id,details:JSON.stringify({project_id:project.project_id})});
+        await addFollowUp({projectId:project.project_id,date:fuDate,time:fuTime,type:fuType,result:fuResult,notes:fuNotes,nextActionDate:nextDate,nextActionType:nextDate?nextType:undefined});
         setFuMsg("Follow-up created. Refreshing…"); window.location.reload();
       }catch(e){setFuMsg(err(e))}
     });
@@ -57,13 +52,9 @@ export default function ProjectActions({project, followUps, contract, collected}
     if(!result&&!notes)return;
     await withBusy(async()=>{
       try{
-        const supabase=createClient(); const {data:{user}}=await supabase.auth.getUser(); if(!user)throw new Error("Unauthorized");
-        const {data:f,error:fe}=await supabase.from("follow_ups").select("*").eq("follow_up_id",id).maybeSingle(); if(fe)throw new Error(fe.message); if(!f)throw new Error("Follow-up not found");
-        const now=new Date().toISOString();
-        const {error}=await supabase.from("follow_ups").update({result:result||f.result||null,completed_at:now,completed_result:result||f.result||null,completed_notes:notes||null,next_action_status:"Completed",notes:notes||f.notes||null}).eq("follow_up_id",id);
-        if(error)throw new Error(error.message);
-        await supabase.from("projects").update({last_followup_date:f.follow_up_date,updated_at:now}).eq("project_id",f.project_id);
-        await supabase.from("audit_log").insert({log_id:crypto.randomUUID(),timestamp:now,user:user.email||"unknown",action:"Follow Up Completed",entity_type:"Follow Up",entity_id:id,details:JSON.stringify({project_id:f.project_id})});
+        const nextActionDate=window.prompt("Next Action Date (YYYY-MM-DD, optional):")||"";
+        const nextActionType=nextActionDate?(window.prompt("Next Action Type (Call / Visit / Email / Meeting / WhatsApp / Other):")||"Call"):"";
+        await completeFollowUp({followUpId:id,result,notes,nextActionDate:nextActionDate||undefined,nextActionType:nextActionDate?nextActionType:undefined});
         window.location.reload();
       }catch(e){window.alert(err(e))}
     });
