@@ -34,8 +34,8 @@ export async function addFollowUp(input:{
   const followUpId=crypto.randomUUID();
   const {error}=await supabase.from("follow_ups").insert({
     followup_id:followUpId, project_id:input.projectId, followup_date:input.date,
-    followup_time:input.time||null, followup_type:input.type, result:input.result||null,
-    next_action_date:input.nextActionDate||null, next_action_type:input.nextActionType||null,
+    followup_time:input.time || ((input.type === "Call" || input.type === "Meeting") ? "10:00" : null), followup_type:input.type, result:input.result||null,
+    next_action_date:input.nextActionDate||null, next_action_type:input.nextActionDate ? (input.nextActionType||input.type) : null,
     next_action_status:input.nextActionDate?"Pending":null, notes:input.notes||null, created_at:now
   });
   if(error) throw new Error(error.message);
@@ -81,14 +81,14 @@ export async function completeFollowUp(input:{
     nextFollowUpId=crypto.randomUUID();
     const {error:nextError}=await supabase.from("follow_ups").insert({
       followup_id:nextFollowUpId, project_id:followUp.project_id,
-      followup_date:input.nextActionDate, followup_type:input.nextActionType||"Other",
-      next_action_status:"Pending", created_at:completedAt
+      followup_date:input.nextActionDate, followup_time:((input.nextActionType === "Call" || input.nextActionType === "Meeting") ? "10:00" : null), followup_type:input.nextActionType||"Other",
+      next_action_date:input.nextActionDate, next_action_type:null, next_action_status:"Pending", created_at:completedAt
     });
     if(nextError) throw new Error(nextError.message);
   }
 
   const {error:projectError}=await supabase.from("projects").update({
-    last_followup_date:followUp.followup_date, next_followup_date:input.nextActionDate||null,
+    last_followup_date:completedAt, next_followup_date:input.nextActionDate||null,
     updated_at:completedAt
   }).eq("project_id",followUp.project_id);
   if(projectError) throw new Error(projectError.message);
