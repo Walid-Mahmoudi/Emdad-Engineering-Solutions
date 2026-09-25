@@ -5,6 +5,8 @@ export default async function AutomationPage(){
   const supabase=await createClient();
   const {data:{user}}=await supabase.auth.getUser();
   if(!user)return <main className="nexus-page"><h1>Automation</h1><p>Unauthorized</p></main>;
+  const {data:profile}=await supabase.from("users").select("role,active").eq("user_id",user.id).maybeSingle();
+  if(!profile?.active || !["Admin","Manager"].includes(profile.role)) return <main className="nexus-page"><h1>Automation</h1><p>Access restricted to Admin and Manager.</p></main>;
 
   const [{data:settings},{data:logs},{data:notifications}]=await Promise.all([
     supabase.from("settings").select("type,value").in("type",[
