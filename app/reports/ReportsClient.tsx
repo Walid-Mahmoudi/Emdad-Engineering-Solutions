@@ -5,7 +5,8 @@ import { Download, FileCheck2, Filter, RefreshCw } from "lucide-react";
 type Props={projects:any[];followups:any[];contracts:any[];collections:any[]};
 const reports=["projects","pipeline","focus","followups","contracts","clients"] as const;
 const labels:any={projects:"Projects Report",pipeline:"Pipeline Report",focus:"Focus Projects",followups:"Follow-Up Report",contracts:"Contracts & Collections",clients:"Client Report"};
-const stages=["Tender","Tender – High Probability","In Hand","Negotiation","Closed Won","Closed Lost"];\nconst collectedStatuses=new Set(["collected","paid","تم التحصيل","محصل","محصلة","تحصيل"]);\nconst cancelledStatuses=new Set(["cancelled","canceled","ملغى","ملغاة"]);\nfunction countsAsCollected(row:any){const status=String(row.status||"").trim().toLowerCase();const date=String(row.collection_date||"").trim();return !cancelledStatuses.has(status)&&(collectedStatuses.has(status)||date!=="");}
+const stages=["Tender","Tender – High Probability","In Hand","Negotiation","Closed Won","Closed Lost"];
+const collectedStatuses=new Set(["collected","paid","تم التحصيل","محصل","محصلة","تحصيل"]);\nconst cancelledStatuses=new Set(["cancelled","canceled","ملغى","ملغاة"]);\nfunction countsAsCollected(row:any){const status=String(row.status||"").trim().toLowerCase();const date=String(row.collection_date||"").trim();return !cancelledStatuses.has(status)&&(collectedStatuses.has(status)||date!=="");}
 function money(v:number){return Number(v||0).toLocaleString()+" EGP";}
 function inRange(v:any,from:string,to:string){if(!from&&!to)return true;const d=v?new Date(v):null;if(!d||isNaN(d.getTime()))return false;const a=from?new Date(from+"T00:00:00"):null;const b=to?new Date(to+"T23:59:59"):null;return (!a||d>=a)&&(!b||d<=b)}
 export default function ReportsClient({projects,followups,contracts,collections}:Props){
