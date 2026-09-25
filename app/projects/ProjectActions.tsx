@@ -9,7 +9,7 @@ import { addCollection } from "@/app/collections/actions";
 const STAGES = ["Tender","Tender – High Probability","In Hand","Negotiation","Closed Won","Closed Lost"] as const;
 const TYPES = ["Call","Visit","Email","Meeting","WhatsApp","Other"] as const;
 
-export default function ProjectActions({project, followUps, contract, collected}:{project:any;followUps:any[];contract:any;collected:number}) {
+export default function ProjectActions({project, followUps, contract, collected}:{project:{project_id:string;current_action:string|null;estimated_value:number|null};followUps:Array<{follow_up_id:string;follow_up_type:string|null;result:string|null;follow_up_date:string;completed_at:string|null}>;contract:{contract_id:string;contract_value:number}|null;collected:number}) {
   const [busy,setBusy]=useState(false);
   const [stage,setStage]=useState(project.current_action||"Tender");
   const [stageMsg,setStageMsg]=useState("");
