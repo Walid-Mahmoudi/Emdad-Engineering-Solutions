@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import { CalendarClock, AlertCircle, CheckCircle2, Plus, Phone, Search } from "lucide-react";
 import { addFollowUp, completeFollowUp } from "./actions";
 const TYPES=["Call","Visit","Email","Meeting","WhatsApp","Other"];
 export default function FollowUpsClient({projects,followUps}:{projects:any[];followUps:any[]}) {
@@ -9,8 +10,8 @@ export default function FollowUpsClient({projects,followUps}:{projects:any[];fol
   const overdue=rows.filter(f=>f.follow_up_date && f.follow_up_date<today).length; const todayCount=rows.filter(f=>f.follow_up_date===today).length;
   async function save(){if(!projectId||!date){setMessage("Project and date are required.");return}setBusy(true);setMessage("");try{await addFollowUp({projectId,date,time,type,notes,nextActionDate:nextDate,nextActionType:nextDate?nextType:undefined});setMessage("Follow-up saved.");window.location.reload()}catch(e:any){setMessage(e.message||"Save failed.");setBusy(false)}}
   async function complete(id:string){const result=window.prompt("Follow-up result / outcome:");if(!result)return;const notes=window.prompt("Notes (optional):")||"";setBusy(true);try{await completeFollowUp({followUpId:id,result,notes});window.location.reload()}catch(e:any){setMessage(e.message||"Completion failed.");setBusy(false)}}
-  return <div><div className="pipeline-kpis"><div className="pipeline-kpi"><span>Today</span><strong>{todayCount}</strong></div><div className="pipeline-kpi"><span>Overdue</span><strong>{overdue}</strong></div><div className="pipeline-kpi"><span>Open</span><strong>{rows.length}</strong></div></div>
-  <section className="nexus-card" style={{marginBottom:16}}><h2>Add Follow Up</h2><div className="nexus-form-grid">
+  return <div><div className="dashboard-stat-grid followup-kpis"><div className="nexus-stat-card"><div className="nexus-stat-icon blue"><CalendarClock size={18}/></div><div><span>Today</span><strong>{todayCount}</strong><small>Due today</small></div></div><div className="nexus-stat-card"><div className="nexus-stat-icon red"><AlertCircle size={18}/></div><div><span>Overdue</span><strong>{overdue}</strong><small>Needs attention</small></div></div><div className="nexus-stat-card"><div className="nexus-stat-icon green"><CheckCircle2 size={18}/></div><div><span>Open</span><strong>{rows.length}</strong><small>Pending activities</small></div></div></div><section className="nexus-card followup-create"><div className="pipeline-kpi"><span>Today</span><strong>{todayCount}</strong></div><div className="pipeline-kpi"><span>Overdue</span><strong>{overdue}</strong></div><div className="pipeline-kpi"><span>Open</span><strong>{rows.length}</strong></div></div>
+  <div className="section-head"><div><h2>Create activity</h2><p className="muted">Schedule the next customer touchpoint.</p></div><Plus size={18}/></div><div className="nexus-form-grid">
   <label>Project<select value={projectId} onChange={e=>setProjectId(e.target.value)}><option value="">Select project</option>{projects.map(p=><option key={p.project_id} value={p.project_id}>{p.project_name} — {p.client}</option>)}</select></label>
   <label>Date<input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label><label>Time<input type="time" value={time} onChange={e=>setTime(e.target.value)}/></label>
   <label>Type<select value={type} onChange={e=>setType(e.target.value)}>{TYPES.map(t=><option key={t}>{t}</option>)}</select></label>
