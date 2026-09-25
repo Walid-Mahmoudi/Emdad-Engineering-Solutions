@@ -57,7 +57,7 @@ export async function runCrmAutomation() {
     if (Number.isNaN(due.getTime())) continue;
 
     const overdue = due < now;
-    if (overdue || due <= windowEnd) candidates.push({ followup, project, email: user.email, due, overdue });
+    if (overdue || due <= windowEnd) candidates.push({ followup: followUp, project, email: user.email, due, overdue });
   }
 
   let created = 0;
