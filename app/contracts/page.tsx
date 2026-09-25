@@ -10,8 +10,11 @@ export default async function ContractsPage(){
  const rows=data??[];
  const total=rows.reduce((s,r)=>s+Number(r.contract_value||0),0);
  const projectIds=rows.map(r=>r.project_id);
- const {data:collections}=projectIds.length?await supabase.from("collections").select("contract_id,amount").in("contract_id",rows.map(r=>r.contract_id)): {data:[]};
- const collected=(collections??[]).reduce((s,r)=>s+Number(r.amount||0),0);
+ const {data:collections}=projectIds.length?await supabase.from("collections").select("contract_id,amount,status,collection_date").in("contract_id",rows.map(r=>r.contract_id)): {data:[]};
+ const collectedStatuses=new Set(["collected","paid","تم التحصيل","محصل","محصلة","تحصيل"]);
+ const cancelledStatuses=new Set(["cancelled","canceled","ملغى","ملغاة"]);
+ const countsAsCollected=(r:any)=>{const status=String(r.status||"").trim().toLowerCase();const date=String(r.collection_date||"").trim();return !cancelledStatuses.has(status)&&(collectedStatuses.has(status)||date!=="");};
+ const collected=(collections??[]).filter(countsAsCollected).reduce((s,r)=>s+Number(r.amount||0),0);
  return <main className="nexus-page finance-workspace">
   <header className="nexus-page-head"><div><div className="eyebrow">REVENUE & FINANCE</div><h1>Contracts</h1><p>Contract register with collection progress and outstanding balances.</p></div><div className="nexus-head-actions"><span className="workspace-chip"><FileCheck2 size={14}/> {rows.length} contracts</span></div></header>
   <section className="dashboard-stat-grid finance-kpis">
