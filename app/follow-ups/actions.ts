@@ -50,8 +50,9 @@ export async function addFollowUp(input:{
 }
 
 export async function completeFollowUp(input:{
-  followUpId:string; result?:string; notes?:string; nextActionDate?:string; nextActionType?:string;
+  followUpId:string; type:string; result?:string; notes?:string; nextActionDate?:string; nextActionType?:string;
 }) {
+  if(!TYPES.includes(input.type as typeof TYPES[number])) throw new Error("Invalid follow-up type");
   if(!input.result && !input.notes) throw new Error("Result or Notes is required");
   if(input.nextActionDate && input.nextActionType && !TYPES.includes(input.nextActionType as typeof TYPES[number])) throw new Error("Invalid next action type");
 
@@ -66,7 +67,7 @@ export async function completeFollowUp(input:{
 
   const completedAt=new Date().toISOString();
   const {error:updateError}=await supabase.from("follow_ups").update({
-    result:input.result||followUp.result||null, completed_at:completedAt,
+    followup_type:input.type, result:input.result||followUp.result||null, completed_at:completedAt,
     completed_result:input.result||followUp.result||null, completed_notes:input.notes||null,
     next_action_date:input.nextActionDate||null, next_action_type:input.nextActionType||null,
     next_action_status:input.nextActionDate?"Pending":"Completed", notes:input.notes||followUp.notes||null
