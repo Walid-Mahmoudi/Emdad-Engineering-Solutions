@@ -33,8 +33,8 @@ export default async function SalesPerformancePage(){
  const week=startOfWeek(today), nextWeek=new Date(week);nextWeek.setDate(nextWeek.getDate()+7);
  const inWeek=(v:any)=>{const d=day(v);return !!d&&d>=week&&d<nextWeek};
  const pending=(f:any)=>String(f.next_action_status||"Pending")!=="Completed"&&!f.completed_at;
- const todayCount=followups.filter(f=>pending(f)&&day(f.next_action_date)?.toDateString()===today.toDateString()).length;
- const overdue=followups.filter(f=>pending(f)&&day(f.next_action_date)&&day(f.next_action_date)!==null&&day(f.next_action_date)!>=new Date("1900-01-01")&&day(f.next_action_date)!<today).length;
+ const todayCount=followups.filter(f=>pending(f)&&day(f.followup_date)?.toDateString()===today.toDateString()).length;
+ const overdue=followups.filter(f=>pending(f)&&day(f.followup_date)&&day(f.followup_date)!==null&&day(f.followup_date)!>=new Date("1900-01-01")&&day(f.followup_date)!<today).length;
  const noNext=active.filter(p=>!p.next_followup_date).length;
  const age=(p:any)=>{const d=day(p.last_followup_date||p.created_at||p.opportunity_date);return d?Math.max(0,Math.floor((today.getTime()-new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime())/86400000)):999};
  const stale=active.filter(p=>age(p)>14);
