@@ -82,7 +82,7 @@ export async function completeFollowUp(input:{
     const {error:nextError}=await supabase.from("follow_ups").insert({
       followup_id:nextFollowUpId, project_id:followUp.project_id,
       followup_date:input.nextActionDate, followup_time:((input.nextActionType === "Call" || input.nextActionType === "Meeting") ? "10:00" : null), followup_type:input.nextActionType||"Other",
-      next_action_date:input.nextActionDate, next_action_type:null, next_action_status:"Pending", created_at:completedAt
+      next_action_date:null, next_action_type:null, next_action_status:"Pending", created_at:completedAt
     });
     if(nextError) throw new Error(nextError.message);
   }
