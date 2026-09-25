@@ -192,3 +192,15 @@ label{color:#334155}
 /* Customer workspaces */
 .client-summary{grid-template-columns:repeat(3,1fr);margin-bottom:14px}.clients-workspace .nexus-table tbody td:first-child{font-weight:800;color:#172033}.clients-workspace .nexus-table tbody tr:hover{background:#f8fbff}.contacts-filters{margin-bottom:14px}.contacts-workspace .nexus-table tbody tr:hover{background:#f8fbff}.contacts-workspace .nexus-table td:first-child{font-weight:800;color:#172033}.contacts-workspace .nexus-table td:nth-child(5),.contacts-workspace .nexus-table td:nth-child(6),.contacts-workspace .nexus-table td:nth-child(7){font-size:9px;color:#64748b}
 @media(max-width:800px){.client-summary{grid-template-columns:1fr}}
+
+
+/* Revenue & Finance workspace */
+.finance-kpis{grid-template-columns:repeat(4,1fr)}
+.finance-workspace .nexus-card{box-shadow:0 2px 8px rgba(15,23,42,.025)}
+.contract-workspace-card{padding:18px}
+.finance-project-link{display:flex;align-items:center;gap:8px;text-decoration:none;color:#2563eb}
+.finance-project-link>span{min-width:0}.finance-project-link strong{display:block;color:#1e293b;font-size:11px;font-weight:800}.finance-project-link small{display:block;margin-top:3px;color:#94a3b8;font-size:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.collection-progress{min-width:125px}.collection-progress>div{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}.collection-progress span{font-size:8px;color:#64748b}.collection-progress strong{font-size:8px;color:#334155}.collection-progress>i{display:block;height:5px;border-radius:999px;background:#edf2f7;overflow:hidden}.collection-progress b{display:block;height:100%;border-radius:999px;background:#22c55e;max-width:100%}
+.finance-workspace .nexus-table td:nth-child(4),.finance-workspace .nexus-table td:nth-child(5),.finance-workspace .nexus-table td:nth-child(6){white-space:nowrap}
+@media(max-width:1050px){.finance-kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.finance-kpis{grid-template-columns:1fr}.contract-workspace-card{padding:12px}.finance-workspace .nexus-table{min-width:980px}}
