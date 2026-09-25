@@ -1,15 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { moveProjectStage } from "@/app/pipeline/actions";
-import { addFollowUp, completeFollowUp } from "@/app/follow-ups/actions";
-import { createContract } from "@/app/contracts/actions";
-import { addCollection } from "@/app/collections/actions";
-
 const STAGES = ["Tender","Tender – High Probability","In Hand","Negotiation","Closed Won","Closed Lost"] as const;
 const TYPES = ["Call","Visit","Email","Meeting","WhatsApp","Other"] as const;
 
-export default function ProjectActions({project, followUps, contract, collected}:{project:{project_id:string;current_action:string|null;estimated_value:number|null};followUps:Array<{follow_up_id:string;follow_up_type:string|null;result:string|null;follow_up_date:string;completed_at:string|null}>;contract:{contract_id:string;contract_value:number}|null;collected:number}) {
+export default function ProjectActions({project, followUps, contract, collected, actions}:{project:{project_id:string;current_action:string|null;estimated_value:number|null};followUps:Array<{follow_up_id:string;follow_up_type:string|null;result:string|null;follow_up_date:string;completed_at:string|null}>;contract:{contract_id:string;contract_value:number}|null;collected:number;actions:{moveProjectStage:(input:any)=>Promise<any>;addFollowUp:(input:any)=>Promise<any>;completeFollowUp:(input:any)=>Promise<any>;createContract:(input:any)=>Promise<any>;addCollection:(input:any)=>Promise<any>}}) {
   const [busy,setBusy]=useState(false);
   const [stage,setStage]=useState(project.current_action||"Tender");
   const [stageMsg,setStageMsg]=useState("");
@@ -39,7 +34,7 @@ export default function ProjectActions({project, followUps, contract, collected}
     setStageMsg("");
     await run(async()=>{
       try{
-        await moveProjectStage({
+        await actions.moveProjectStage({
           projectId:project.project_id,
           newStage:stage as typeof STAGES[number],
           contractDate:stage==="Closed Won"?contractDate:undefined,
@@ -57,7 +52,7 @@ export default function ProjectActions({project, followUps, contract, collected}
     await run(async()=>{
       try{
         if(!fuDate) throw new Error("Follow-up date is required");
-        await addFollowUp({projectId:project.project_id,date:fuDate,time:fuTime,type:fuType,result:fuResult,notes:fuNotes,nextActionDate:nextDate,nextActionType:nextDate?nextType:undefined});
+        await actions.addFollowUp({projectId:project.project_id,date:fuDate,time:fuTime,type:fuType,result:fuResult,notes:fuNotes,nextActionDate:nextDate,nextActionType:nextDate?nextType:undefined});
         setFuMsg("Follow-up created. Refreshing…");
         window.location.reload();
       }catch(e:any){setFuMsg(e.message||"Follow-up failed");}
@@ -69,7 +64,7 @@ export default function ProjectActions({project, followUps, contract, collected}
     const notes=prompt("Notes (optional):")||"";
     if(!result&&!notes) return;
     await run(async()=>{
-      try{ await completeFollowUp({followUpId:id,result,notes}); window.location.reload(); }
+      try{ await actions.completeFollowUp({followUpId:id,result,notes}); window.location.reload(); }
       catch(e:any){alert(e.message||"Could not complete follow-up");}
     });
   }
@@ -79,7 +74,7 @@ export default function ProjectActions({project, followUps, contract, collected}
     await run(async()=>{
       try{
         if(!contractDate||!Number(contractValue)) throw new Error("Contract date and value are required");
-        await createContract({projectId:project.project_id,contractDate,contractValue:Number(contractValue)});
+        await actions.createContract({projectId:project.project_id,contractDate,contractValue:Number(contractValue)});
         setContractMsg("Contract created. Refreshing…");
         window.location.reload();
       }catch(e:any){setContractMsg(e.message||"Contract creation failed");}
@@ -91,7 +86,7 @@ export default function ProjectActions({project, followUps, contract, collected}
     await run(async()=>{
       try{
         if(!contract) throw new Error("No contract found");
-        await addCollection({contractId:contract.contract_id,projectId:project.project_id,date:collectionDate,amount:Number(collectionAmount),paymentMethod,notes:collectionNotes});
+        await actions.addCollection({contractId:contract.contract_id,projectId:project.project_id,date:collectionDate,amount:Number(collectionAmount),paymentMethod,notes:collectionNotes});
         setCollectionMsg("Collection recorded. Refreshing…");
         window.location.reload();
       }catch(e:any){setCollectionMsg(e.message||"Collection failed");}
