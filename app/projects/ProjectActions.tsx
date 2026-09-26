@@ -113,7 +113,7 @@ export default function ProjectActions({project, followUps, contract, collected}
       <label>Date<input type="date" value={fuDate} onChange={e=>setFuDate(e.target.value)}/></label>
       <label>Type<select value={fuType} onChange={e=>setFuType(e.target.value)}>{TYPES.map(t=><option key={t}>{t}</option>)}</select></label>
       <label>Result<input value={fuResult} onChange={e=>setFuResult(e.target.value)} placeholder="Optional"/></label>
-      <label>Next Action Date<input type="date" value={nextDate} onChange={e=>setNextDate(e.target.value)}/></label><label>Next Action Type<select value={nextType} onChange={e=>setNextType(e.target.value)}>{TYPES.map(t=><option key={t}>{t}</option>)}</label>
+      <label>Next Action Date<input type="date" value={nextDate} onChange={e=>setNextDate(e.target.value)}/></label><label>Next Action Type<select value={nextType} onChange={e=>setNextType(e.target.value)}>{TYPES.map(t=><option key={t}>{t}</option>)}</select></label>
       <label style={{gridColumn:"1/-1"}}>Notes<textarea value={fuNotes} onChange={e=>setFuNotes(e.target.value)} rows={2}/></label>
       <div><button className="nexus-primary" disabled={busy} onClick={createFU}>Create Follow-up</button></div>
     </div>
