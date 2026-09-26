@@ -8,7 +8,8 @@ const stages=["Tender","Tender – High Probability","In Hand","Negotiation"]; c
 
 function money(v:number){return new Intl.NumberFormat("en-EG",{style:"currency",currency:"EGP",maximumFractionDigits:0}).format(v||0)}
 
-export default async function Dashboard({searchParams}:{searchParams:Promise<{period?:string}>}){\n const params=await searchParams; const periodKey=periods.some(p=>p.key===params.period)?params.period||"month":"month"; const period=periods.find(p=>p.key===periodKey)!;
+export default async function Dashboard({searchParams}:{searchParams:Promise<{period?:string}>}){
+ const params=await searchParams; const periodKey=periods.some(p=>p.key===params.period)?params.period||"month":"month"; const period=periods.find(p=>p.key===periodKey)!;
  const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();if(!user)redirect("/login");
  const {data:profile}=await supabase.from("users").select("name,email,role,active,sales_name").eq("user_id",user.id).maybeSingle();
  if(!profile?.active)return <main className="nexus-page"><section className="nexus-empty"><div className="eyebrow">EMDAD NEXUS</div><h1>Access pending</h1><p>Your account is authenticated, but no active CRM user profile is assigned yet.</p></section></main>;
@@ -42,7 +43,8 @@ export default async function Dashboard({searchParams}:{searchParams:Promise<{pe
     <div className="nexus-stat-card"><div className="nexus-stat-icon blue"><FolderKanban size={18}/></div><div><span>Active Projects</span><strong>{active.length}</strong><small>Across your pipeline</small></div><ArrowUpRight size={16}/></div>
     <div className="nexus-stat-card"><div className="nexus-stat-icon green"><CircleDollarSign size={18}/></div><div><span>Pipeline Value</span><strong>{money(pipelineValue)}</strong><small>Estimated active value</small></div><TrendingUp size={16}/></div>
     <div className="nexus-stat-card"><div className="nexus-stat-icon amber"><CalendarClock size={18}/></div><div><span>Follow Ups Due</span><strong>{due}</strong><small>Today or overdue</small></div><ArrowUpRight size={16}/></div>
-    <div className="nexus-stat-card"><div className="nexus-stat-icon blue"><FolderKanban size={18}/></div><div><span>New Projects</span><strong>{newProjects}</strong><small>Created during period</small></div></div>\n    <div className="nexus-stat-card"><div className="nexus-stat-icon blue"><Phone size={18}/></div><div><span>Calls</span><strong>{calls}</strong><small>Recorded activity</small></div></div>
+    <div className="nexus-stat-card"><div className="nexus-stat-icon blue"><FolderKanban size={18}/></div><div><span>New Projects</span><strong>{newProjects}</strong><small>Created during period</small></div></div>
+    <div className="nexus-stat-card"><div className="nexus-stat-icon blue"><Phone size={18}/></div><div><span>Calls</span><strong>{calls}</strong><small>Recorded activity</small></div></div>
     <div className="nexus-stat-card"><div className="nexus-stat-icon green"><MapPin size={18}/></div><div><span>Visits</span><strong>{visits}</strong><small>Customer / site visits</small></div></div>
     <div className="nexus-stat-card"><div className="nexus-stat-icon purple"><Users size={18}/></div><div><span>Meetings</span><strong>{meetings}</strong><small>Recorded activity</small></div></div>
     <div className="nexus-stat-card"><div className="nexus-stat-icon amber"><Crosshair size={18}/></div><div><span>Moved to Focus</span><strong>{focusIds.size}</strong><small>Focus-stage movement</small></div></div>
