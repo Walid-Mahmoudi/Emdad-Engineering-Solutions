@@ -25,7 +25,7 @@ export async function addFollowUp(input:{
   if(!user) throw new Error("Unauthorized");
 
   const {data:project,error:projectError}=await supabase.from("projects")
-    .select("project_id,project_name,client,sales_person")
+    .select("project_id,project_name,client,sales_person,next_followup_date")
     .eq("project_id",input.projectId).maybeSingle();
   if(projectError) throw new Error(projectError.message);
   if(!project) throw new Error("Project not found or not accessible");
@@ -40,8 +40,9 @@ export async function addFollowUp(input:{
   });
   if(error) throw new Error(error.message);
 
+  const nextFollowupDate=input.nextActionDate || project.next_followup_date || null;
   const {error:updateError}=await supabase.from("projects").update({
-    last_followup_date:input.date, next_followup_date:input.nextActionDate||null, updated_at:now
+    last_followup_date:input.date, next_followup_date:nextFollowupDate, updated_at:now
   }).eq("project_id",input.projectId);
   if(updateError) throw new Error(updateError.message);
 
