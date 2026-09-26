@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Activity, Bell, BriefcaseBusiness, CalendarCheck2, ChartNoAxesCombined, CheckCircle2, CircleDollarSign, Database, FileCheck2, FolderKanban, Gauge, LayoutDashboard, LifeBuoy, Menu, Settings2, ShieldCheck, Target, UsersRound, X, ChevronRight } from "lucide-react";
+import { Activity, Bell, BriefcaseBusiness, CalendarCheck2, ChartNoAxesCombined, CheckCircle2, CircleDollarSign, Database, FileCheck2, FolderKanban, Gauge, LayoutDashboard, LifeBuoy, Menu, Settings2, ShieldCheck, Target, UsersRound, TrendingDown, X, ChevronRight } from "lucide-react";
 
 type IconComponent = React.ComponentType<{ size?: number; strokeWidth?: number }>;
 type NavItem = [string,string,IconComponent];
