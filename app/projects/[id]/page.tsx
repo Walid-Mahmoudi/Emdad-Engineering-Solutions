@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import ProjectActions from "../ProjectActions";
 import ProjectDangerZone from "../ProjectDangerZone";
+import ProjectAttachments from "../ProjectAttachments";
 import { cappedCollectedAmount, remainingAmount } from "@/lib/finance";
 import { ArrowLeft, Building2, MapPin, UserRound, CalendarClock, CircleDollarSign, FileText, Paperclip, History, Phone } from "lucide-react";
 
@@ -88,8 +89,10 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
       </section>
     </div>
 
-    <section className="card"><div className="section-head"><h2>Attachments</h2><span className="muted">{attachments.data?.length||0}</span></div>
-      {attachments.data?.length?<div className="compact-list">{attachments.data.map(a=><a className="list-row" key={a.attachment_id} href={a.file_url} target="_blank" rel="noreferrer"><div><strong>{a.file_name}</strong><span>{a.mime_type||"File"} · {a.uploaded_by||"—"}</span></div></a>)}</div>:<p className="muted">No attachments.</p>}
-    </section>
+    <ProjectAttachments
+      projectId={project.project_id}
+      attachments={(attachments.data||[]).map(a=>({attachment_id:a.attachment_id,file_name:a.file_name,mime_type:a.mime_type||null,file_size:a.file_size==null?null:Number(a.file_size),uploaded_by:a.uploaded_by||null,storage_path:a.storage_path||null,file_url:a.file_url||null}))}
+      canManage={!project.deleted_at && ["Admin","Manager"].includes(profile.role||"")}
+    />
   </main>;
 }
