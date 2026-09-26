@@ -23,7 +23,6 @@ export default async function Dashboard({searchParams}:{searchParams:Promise<{pe
  const rows=projects||[];const active=rows.filter(p=>stages.includes(p.current_action||""));const pipelineValue=active.reduce((n,p)=>n+Number(p.estimated_value||0),0);
  const contractRows=contracts||[];const contractValue=contractRows.reduce((n,c)=>n+Number(c.contract_value||0),0);
  const {data:collectionRows}=contractRows.length?await supabase.from("collections").select("contract_id,amount,status,collection_date").in("contract_id",contractRows.map(c=>c.contract_id)):{data:[]};
- const collectedStatuses=new Set(["collected","paid","تم التحصيل","محصل","محصلة","تحصيل"]);const cancelledStatuses=new Set(["cancelled","canceled","ملغى","ملغاة"]);
  const groupedCollections=new Map<string,any[]>();(collectionRows||[]).forEach(c=>groupedCollections.set(c.contract_id,[...(groupedCollections.get(c.contract_id)||[]),c]));
  const collected=contractRows.reduce((n,c)=>n+Math.min(Math.max(collectedAmount(groupedCollections.get(c.contract_id)||[]),0),Math.max(Number(c.contract_value||0),0)),0);
  const today=new Date().toISOString().slice(0,10);const due=active.filter(p=>p.next_followup_date&&String(p.next_followup_date).slice(0,10)<=today).length;
