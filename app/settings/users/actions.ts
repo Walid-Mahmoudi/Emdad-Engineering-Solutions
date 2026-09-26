@@ -63,6 +63,10 @@ export async function saveUser(input: {
       updated_at: new Date().toISOString()
     }).eq("user_id", userId);
     if (error) throw new Error(error.message);
+    const { error: accessError } = await supabase.functions.invoke("admin-user-management", {
+      body: { action: input.active ? "enable" : "disable", userId }
+    });
+    if (accessError) throw new Error(accessError.message);
   } else {
     const { data: authResult, error: authError } = await supabase.functions.invoke("admin-user-management", {
       body: { action: "create", name, email }
@@ -78,6 +82,12 @@ export async function saveUser(input: {
     if (error) {
       await supabase.functions.invoke("admin-user-management", { body: { action: "disable", userId: createdUserId } });
       throw new Error(error.message);
+    }
+    if (!input.active) {
+      const { error: accessError } = await supabase.functions.invoke("admin-user-management", {
+        body: { action: "disable", userId: createdUserId }
+      });
+      if (accessError) throw new Error(accessError.message);
     }
   }
 
@@ -104,6 +114,10 @@ export async function disableUser(userId: string) {
 
   const { error } = await supabase.from("users").update({ active: false, updated_at: new Date().toISOString() }).eq("user_id", id);
   if (error) throw new Error(error.message);
+  const { error: accessError } = await supabase.functions.invoke("admin-user-management", {
+    body: { action: "disable", userId: id }
+  });
+  if (accessError) throw new Error(accessError.message);
 
   await supabase.from("audit_log").insert({
     log_id: crypto.randomUUID(), timestamp: new Date().toISOString(),
