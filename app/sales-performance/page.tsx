@@ -13,7 +13,8 @@ function dateOnly(v:any){if(!v)return null;const raw=String(v).slice(0,10);retur
 function startOfWeekKey(key:string){const [y,m,d]=key.split("-").map(Number);const x=new Date(Date.UTC(y,m-1,d));x.setUTCDate(x.getUTCDate()-x.getUTCDay());return x.toISOString().slice(0,10)}
 
 
-export default async function SalesPerformancePage(){
+export default async function SalesPerformancePage({searchParams}:{searchParams?:Promise<Record<string,string|string[]|undefined>>}){
+ const params=searchParams?await searchParams:{}; const rawPeriod=params.period; const period=Array.isArray(rawPeriod)?rawPeriod[0]:(rawPeriod||"week"); const rawFrom=params.from; const fromParam=Array.isArray(rawFrom)?rawFrom[0]:(rawFrom||""); const rawTo=params.to; const toParam=Array.isArray(rawTo)?rawTo[0]:(rawTo||"");
  const s=await createClient();
  const {data:{user}}=await s.auth.getUser();
  if(!user)return <main className="nexus-page"><h1>Sales Performance</h1><p>Unauthorized</p></main>;
@@ -35,9 +36,9 @@ export default async function SalesPerformancePage(){
  const won=projects.filter(p=>p.current_action==="Closed Won");
   const todayKey=cairoDate();
  const weekKey=startOfWeekKey(todayKey);
- const week=startOfWeekKey(todayKey);
- const nextWeek=new Date(week+"T00:00:00Z");nextWeek.setUTCDate(nextWeek.getUTCDate()+7);
- const inWeek=(v:any)=>{const key=dateOnly(v);return !!key&&key>=week&&key<nextWeek.toISOString().slice(0,10)};
+ const periodRange=(()=>{if(period==="month"){const [y,m]=todayKey.split("-").map(Number);const from=`${y}-${String(m).padStart(2,"0")}-01`;const d=new Date(Date.UTC(y,m,1));return [from,d.toISOString().slice(0,10)] as const;}if(period==="quarter"){const [y,m]=todayKey.split("-").map(Number);const q=Math.floor((m-1)/3);const from=`${y}-${String(q*3+1).padStart(2,"0")}-01`;const d=new Date(Date.UTC(y,q*3+3,1));return [from,d.toISOString().slice(0,10)] as const;}if(period==="custom"&&/^\\d{4}-\\d{2}-\\d{2}$/.test(fromParam)&&/^\\d{4}-\\d{2}-\\d{2}$/.test(toParam)){const d=new Date(toParam+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+1);return [fromParam,d.toISOString().slice(0,10)] as const;}const d=new Date(weekKey+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+7);return [weekKey,d.toISOString().slice(0,10)] as const;})();
+ const [periodFrom,periodTo]=periodRange;
+ const inWeek=(v:any)=>{const key=dateOnly(v);return !!key&&key>=periodFrom&&key<periodTo};
  const dealsDoneThisWeek=projects.filter(p=>p.current_action==="Closed Won"&&inWeek(p.updated_at||p.opportunity_date)).length;
  const pending=(f:any)=>String(f.next_action_status||"Pending")!=="Completed"&&!f.completed_at;
  const todayCount=followups.filter(f=>pending(f)&&dateOnly(f.followup_date)===todayKey).length;
@@ -58,7 +59,8 @@ export default async function SalesPerformancePage(){
  const focus=new Set(history.filter(h=>inWeek(h.action_date)&&["Tender – High Probability","In Hand"].includes(h.new_action)).map(h=>String(h.project_id))).size;
  const top=active.slice().sort((a,b)=>Number(b.estimated_value||0)-Number(a.estimated_value||0)).slice(0,8);
  return <main className="nexus-page sales-performance-workspace">
-  <header className="nexus-page-head"><div><div className="eyebrow">ANALYTICS & PERFORMANCE</div><h1>Sales Performance</h1><p>Sales activity, pipeline movement, forecast and commercial performance.</p></div><div className="nexus-head-actions"><span className="workspace-chip"><Activity size={14}/> Current week · {new Date(weekKey+"T00:00:00Z").toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}</span></div></header>
+  <header className="nexus-page-head"><div><div className="eyebrow">ANALYTICS & PERFORMANCE</div><h1>Sales Performance</h1><p>Sales activity, pipeline movement, forecast and commercial performance.</p></div><div className="nexus-head-actions"><span className="workspace-chip"><Activity size={14}/> {period==="month"?"Current month":period==="quarter"?"Current quarter":period==="custom"?"Custom period":"Current week"} · {new Date(periodFrom+"T00:00:00Z").toLocaleDateString("en-GB",{day:"2-digit",month:"short"})} – {new Date(new Date(periodTo+"T00:00:00Z").getTime()-86400000).toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}</span></div></header>
+  <section className="nexus-card" style={{marginBottom:16}}><div className="section-head"><div><h2>Performance Period</h2><p className="muted">Use the same period controls as the legacy Sales Performance dashboard.</p></div><div className="nexus-head-actions"><Link href="/sales-performance?period=week" className={period==="week"?"nexus-primary":"nexus-secondary"}>Week</Link><Link href="/sales-performance?period=month" className={period==="month"?"nexus-primary":"nexus-secondary"}>Month</Link><Link href="/sales-performance?period=quarter" className={period==="quarter"?"nexus-primary":"nexus-secondary"}>Quarter</Link><form method="get" style={{display:"flex",gap:8,alignItems:"center"}}><input type="hidden" name="period" value="custom"/><input type="date" name="from" defaultValue={fromParam||periodFrom}/><input type="date" name="to" defaultValue={toParam||new Date(new Date(periodTo+"T00:00:00Z").getTime()-86400000).toISOString().slice(0,10)}/><button className="nexus-secondary" type="submit">Apply</button></form></div></div></section>
   <section className="dashboard-stat-grid sales-period-kpis">
    {([ [ChartNoAxesCombined,"New Projects",periodProjects,"Created this week","blue"],[CalendarCheck2,"Calls",calls,"Recorded this week","purple"],[Target,"Visits",visits,"Customer / site visits","green"],[CalendarCheck2,"Meetings",meetings,"Recorded this week","amber"],[Target,"Moved to Focus",focus,"High probability / In Hand","blue"],[TrendingUp,"Negotiation",active.filter(p=>p.current_action==="Negotiation").length,"Current projects","purple"],[FileCheck2,"Deals Done",dealsDoneThisWeek,"Closed Won this week","green"],[CircleDollarSign,"Open Pipeline",money(openPipeline),"Active estimated value","amber" ]] as PerformanceCard[]).map(([Icon,label,value,sub,tone])=><div className="nexus-stat-card" key={label as string}><div className={"nexus-stat-icon "+tone}><Icon size={18}/></div><div><span>{label}</span><strong>{value}</strong><small>{sub}</small></div></div>)}
   </section>
