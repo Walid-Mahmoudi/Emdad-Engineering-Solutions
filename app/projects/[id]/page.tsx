@@ -49,7 +49,9 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
       <div className="card kpi"><span>Remaining</span><strong>{money(remaining)}</strong></div>
     </section>
 
-    <ProjectActions project={{project_id:project.project_id,current_action:project.current_action||null,estimated_value:project.estimated_value==null?null:Number(project.estimated_value)}} followUps={(followups.data||[]).map(f=>({followup_id:f.followup_id,followup_type:f.followup_type||null,result:f.result||null,followup_date:f.followup_date,completed_at:f.completed_at||null}))} contract={contractRow?{contract_id:contractRow.contract_id,contract_value:Number(contractRow.contract_value||0)}:null} collected={collected} />
+    {project.deleted_at&&<section className="card" style={{borderColor:"#f59e0b"}}><strong>Deleted Project</strong><p className="muted">This project is in the Deleted Projects workspace. Restore it from there before making CRM changes.</p></section>}
+
+    {!project.deleted_at&&<ProjectActions project={{project_id:project.project_id,current_action:project.current_action||null,estimated_value:project.estimated_value==null?null:Number(project.estimated_value)}} followUps={(followups.data||[]).map(f=>({followup_id:f.followup_id,followup_type:f.followup_type||null,result:f.result||null,followup_date:f.followup_date,completed_at:f.completed_at||null}))} contract={contractRow?{contract_id:contractRow.contract_id,contract_value:Number(contractRow.contract_value||0)}:null} collected={collected} />}
 
     <ProjectDangerZone projectId={project.project_id} role={profile.role||""} />
 
