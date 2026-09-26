@@ -22,6 +22,9 @@ export async function addCollection(input:{contractId:string;projectId:string;da
 }
 export async function deleteCollection(collectionId:string){
  const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();if(!user)throw new Error("Unauthorized");
+ const {data:profile,error:profileError}=await supabase.from("users").select("role,active").eq("user_id",user.id).maybeSingle();
+ if(profileError)throw new Error(profileError.message);if(!profile?.active)throw new Error("Account is inactive");
+ if(!["Admin","Manager"].includes(profile.role))throw new Error("Only Admin or Manager can delete collections.");
  const {data:collection,error:fetchError}=await supabase.from("collections").select("collection_id,project_id,amount").eq("collection_id",collectionId).maybeSingle();
  if(fetchError)throw new Error(fetchError.message);if(!collection)throw new Error("Collection not found");
  const {error}=await supabase.from("collections").delete().eq("collection_id",collectionId);if(error)throw new Error(error.message);
