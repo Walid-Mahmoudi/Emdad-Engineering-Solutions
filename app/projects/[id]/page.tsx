@@ -27,7 +27,7 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
     supabase.from("follow_ups").select("*").eq("project_id",project.project_id).order("followup_date",{ascending:false}).limit(20),
     supabase.from("contracts").select("*").eq("project_id",project.project_id).order("contract_date",{ascending:false}).limit(1),
     supabase.from("collections").select("*").eq("project_id",project.project_id).order("collection_date",{ascending:false}),
-    supabase.from("contacts").select("*").eq("company",project.client||"").order("name"),
+    supabase.from("contacts").select("*").ilike("company",project.client?.trim()||"").order("name"),
     supabase.from("attachments").select("*").eq("project_id",project.project_id).order("uploaded_at",{ascending:false})
   ]);
 
