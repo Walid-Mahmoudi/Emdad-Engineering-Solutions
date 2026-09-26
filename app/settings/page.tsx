@@ -90,7 +90,7 @@ export default async function SettingsPage() {
           <div className="settings-form-grid">
             <label><span><Zap size={14}/> Automation Enabled</span><input name="automationEnabled" type="checkbox" defaultChecked={(settings.get("AUTOMATION_ENABLED") || "on") === "on"} /></label>
             <label><span>Email Notifications</span><input name="emailNotifications" type="checkbox" defaultChecked={settings.get("EMAIL_NOTIFICATIONS") === "on"} /></label>
-            <label>Reminder Window<select name="reminderHours" defaultValue={settings.get("REMINDER_HOURS_BEFORE") || "24"}>{["1","6","24","48","72"].map((value) => <option key={value}>{value} hours</option>)}</select></label>
+            <label>Reminder Window<select name="reminderHours" defaultValue={settings.get("REMINDER_HOURS_BEFORE") || "24"}>{["1","6","24","48","72"].map((value) => <option key={value} value={value}>{value} hours</option>)}</select></label>
             <label><span>Overdue Escalation</span><input name="overdueEscalation" type="checkbox" defaultChecked={(settings.get("OVERDUE_ESCALATION") || "on") === "on"} /></label>
             <label><span>Calendar Events for Calls & Meetings</span><input name="calendarReminders" type="checkbox" defaultChecked={(settings.get("CALENDAR_REMINDERS_ENABLED") || "on") === "on"} /></label>
             <label><span>Day-Before Calendar Reminder</span><input name="calendarDayBefore" type="checkbox" defaultChecked={(settings.get("CALENDAR_REMINDER_DAY_BEFORE") || "on") === "on"} /></label>
