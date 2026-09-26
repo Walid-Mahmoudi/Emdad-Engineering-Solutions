@@ -30,14 +30,13 @@ export default function ProjectActions({project, followUps, contract, collected}
   async function persistStage(reason?:string){
     await withBusy(async()=>{
       const supabase=createClient();
-      const {data,error}=await supabase.rpc("move_project_stage",{
-        p_project_id:project.project_id,p_new_action:stage,p_notes:null,
-        p_contract_date:stage==="Closed Won"?contractDate:null,
-        p_contract_value:stage==="Closed Won"?Number(contractValue):null,p_lost_reason:reason||null
-      });
+      const rpcName=stage==="Closed Lost"?"move_project_stage_with_lost_type":"move_project_stage";
+      const rpcArgs=stage==="Closed Lost"
+        ? {p_project_id:project.project_id,p_new_action:stage,p_notes:null,p_contract_date:null,p_contract_value:null,p_lost_reason:reason||null,p_lost_type:lostType}
+        : {p_project_id:project.project_id,p_new_action:stage,p_notes:null,p_contract_date:stage==="Closed Won"?contractDate:null,p_contract_value:stage==="Closed Won"?Number(contractValue):null,p_lost_reason:reason||null};
+      const {data,error}=await supabase.rpc(rpcName,rpcArgs);
       if(error) throw new Error(error.message);
       if(data===false) throw new Error("Stage update was not applied.");
-      if(stage==="Closed Lost"){const {error:lossError}=await supabase.from("projects").update({lost_type:lostType}).eq("project_id",project.project_id);if(lossError)throw new Error(lossError.message);}
       setStageMsg("Stage updated successfully. Refreshing…"); window.location.reload();
     }).catch(e=>setStageMsg(err(e)));
   }
@@ -114,7 +113,7 @@ export default function ProjectActions({project, followUps, contract, collected}
       <label>Date<input type="date" value={fuDate} onChange={e=>setFuDate(e.target.value)}/></label>
       <label>Type<select value={fuType} onChange={e=>setFuType(e.target.value)}>{TYPES.map(t=><option key={t}>{t}</option>)}</select></label>
       <label>Result<input value={fuResult} onChange={e=>setFuResult(e.target.value)} placeholder="Optional"/></label>
-      <label>Next Action Date<input type="date" value={nextDate} onChange={e=>setNextDate(e.target.value)}/></label><label>Next Action Type<select value={nextType} onChange={e=>setNextType(e.target.value)}>{TYPES.map(t=><option key={t}>{t}</option>)}</select></label>
+      <label>Next Action Date<input type="date" value={nextDate} onChange={e=>setNextDate(e.target.value)}/></label><label>Next Action Type<select value={nextType} onChange={e=>setNextType(e.target.value)}>{TYPES.map(t=><option key={t}>{t}</option>)}</label>
       <label style={{gridColumn:"1/-1"}}>Notes<textarea value={fuNotes} onChange={e=>setFuNotes(e.target.value)} rows={2}/></label>
       <div><button className="nexus-primary" disabled={busy} onClick={createFU}>Create Follow-up</button></div>
     </div>
