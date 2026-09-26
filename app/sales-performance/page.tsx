@@ -9,7 +9,7 @@ type PerformanceCard=[React.ComponentType<{size?:number;strokeWidth?:number}>,st
 function money(v:number){return new Intl.NumberFormat("en-EG",{maximumFractionDigits:0}).format(v||0)+" EGP";}
 function day(v:any){if(!v)return null;const d=new Date(v);return isNaN(d.getTime())?null:d;}
 function cairoDate(){return new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Cairo"}).format(new Date())}
-function dateOnly(v:any){if(!v)return null;const raw=String(v).slice(0,10);return /^\\d{4}-\\d{2}-\\d{2}$/.test(raw)?raw:null}
+function dateOnly(v:any){if(!v)return null;const raw=String(v).slice(0,10);return /^\d{4}-\d{2}-\d{2}$/.test(raw)?raw:null}
 function startOfWeekKey(key:string){const [y,m,d]=key.split("-").map(Number);const x=new Date(Date.UTC(y,m-1,d));x.setUTCDate(x.getUTCDate()-x.getUTCDay());return x.toISOString().slice(0,10)}
 
 
@@ -33,14 +33,16 @@ export default async function SalesPerformancePage(){
  }
  const active=projects.filter(p=>!["Closed Won","Closed Lost"].includes(p.current_action));
  const won=projects.filter(p=>p.current_action==="Closed Won");
- const today=new Date();today.setHours(0,0,0,0);
- const week=startOfWeek(today), nextWeek=new Date(week);nextWeek.setDate(nextWeek.getDate()+7);
- const inWeek=(v:any)=>{const d=day(v);return !!d&&d>=week&&d<nextWeek};
+ const todayKey=cairoDate();
+ const weekKey=startOfWeekKey(todayKey);
+ const week=startOfWeekKey(todayKey);
+ const nextWeek=new Date(week+"T00:00:00Z");nextWeek.setUTCDate(nextWeek.getUTCDate()+7);
+ const inWeek=(v:any)=>{const key=dateOnly(v);return !!key&&key>=week&&key<nextWeek.toISOString().slice(0,10)};
  const pending=(f:any)=>String(f.next_action_status||"Pending")!=="Completed"&&!f.completed_at;
- const todayCount=followups.filter(f=>pending(f)&&day(f.followup_date)?.toDateString()===today.toDateString()).length;
+ const todayCount=followups.filter(f=>pending(f)&&dateOnly(f.followup_date)===todayKey).length;
  const overdue=followups.filter(f=>pending(f)&&dateOnly(f.followup_date)&&dateOnly(f.followup_date)!<todayKey).length;
  const noNext=active.filter(p=>!p.next_followup_date).length;
- const age=(p:any)=>{const d=day(p.last_followup_date||p.created_at||p.opportunity_date);return d?Math.max(0,Math.floor((today.getTime()-new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime())/86400000)):999};
+ const age=(p:any)=>{const key=dateOnly(p.last_followup_date||p.created_at||p.opportunity_date);if(!key)return 999;const a=new Date(todayKey+"T00:00:00Z").getTime();const b=new Date(key+"T00:00:00Z").getTime();return Math.max(0,Math.floor((a-b)/86400000));};
  const stale=active.filter(p=>age(p)>14);
  const weighted=active.reduce((n,p)=>n+Number(p.estimated_value||0)*(weights[p.current_action]||0),0);
  const openPipeline=active.reduce((n,p)=>n+Number(p.estimated_value||0),0);
