@@ -50,7 +50,7 @@ export async function saveUser(input: {
   if (userId) {
     if (userId === user.id && !input.active) throw new Error("You cannot deactivate your own EMDAD NEXUS access.");
     const { error: authError } = await supabase.functions.invoke("admin-user-management", {
-      body: { action: input.active ? "enable" : "disable", userId }
+      body: { action: "update", userId, email, name }
     });
     if (authError) throw new Error(authError.message);
     const { data: existing, error: existingError } = await supabase.from("users").select("user_id").eq("user_id", userId).maybeSingle();
