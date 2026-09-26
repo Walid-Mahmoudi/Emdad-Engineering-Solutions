@@ -40,10 +40,10 @@ export async function addFollowUp(input:{
   });
   if(error) throw new Error(error.message);
 
-  // Keep the project's next scheduled touchpoint aligned with the activity queue.
-  const nextFollowupDate=input.nextActionDate || input.date;
+  // A newly created activity is scheduled work, not a completed touchpoint.
+  // Keep the project next-follow-up pointer aligned without overwriting the last completed follow-up.
   const {error:updateError}=await supabase.from("projects").update({
-    last_followup_date:input.date, next_followup_date:nextFollowupDate, updated_at:now
+    next_followup_date:input.nextActionDate || input.date, updated_at:now
   }).eq("project_id",input.projectId);
   if(updateError) throw new Error(updateError.message);
 
@@ -84,7 +84,7 @@ export async function completeFollowUp(input:{
     const {error:nextError}=await supabase.from("follow_ups").insert({
       followup_id:nextFollowUpId, project_id:followUp.project_id,
       followup_date:input.nextActionDate, followup_time:((input.nextActionType === "Call" || input.nextActionType === "Meeting") ? "10:00" : null), followup_type:input.nextActionType||"Other",
-      next_action_date:null, next_action_type:null, next_action_status:"Pending", created_at:completedAt
+      next_action_date:null, next_action_type:null, next_action_status:null, created_at:completedAt
     });
     if(nextError) throw new Error(nextError.message);
   }
