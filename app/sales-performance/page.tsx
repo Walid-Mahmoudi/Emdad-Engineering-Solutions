@@ -8,7 +8,10 @@ type PerformanceCard=[React.ComponentType<{size?:number;strokeWidth?:number}>,st
 
 function money(v:number){return new Intl.NumberFormat("en-EG",{maximumFractionDigits:0}).format(v||0)+" EGP";}
 function day(v:any){if(!v)return null;const d=new Date(v);return isNaN(d.getTime())?null:d;}
-function startOfWeek(d:Date){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-x.getDay());return x;}
+function cairoDate(){return new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Cairo"}).format(new Date())}
+function dateOnly(v:any){if(!v)return null;const raw=String(v).slice(0,10);return /^\\d{4}-\\d{2}-\\d{2}$/.test(raw)?raw:null}
+function startOfWeekKey(key:string){const [y,m,d]=key.split("-").map(Number);const x=new Date(Date.UTC(y,m-1,d));x.setUTCDate(x.getUTCDate()-x.getUTCDay());return x.toISOString().slice(0,10)}
+
 
 export default async function SalesPerformancePage(){
  const s=await createClient();
@@ -35,7 +38,7 @@ export default async function SalesPerformancePage(){
  const inWeek=(v:any)=>{const d=day(v);return !!d&&d>=week&&d<nextWeek};
  const pending=(f:any)=>String(f.next_action_status||"Pending")!=="Completed"&&!f.completed_at;
  const todayCount=followups.filter(f=>pending(f)&&day(f.followup_date)?.toDateString()===today.toDateString()).length;
- const overdue=followups.filter(f=>pending(f)&&day(f.followup_date)&&day(f.followup_date)!==null&&day(f.followup_date)!>=new Date("1900-01-01")&&day(f.followup_date)!<today).length;
+ const overdue=followups.filter(f=>pending(f)&&dateOnly(f.followup_date)&&dateOnly(f.followup_date)!<todayKey).length;
  const noNext=active.filter(p=>!p.next_followup_date).length;
  const age=(p:any)=>{const d=day(p.last_followup_date||p.created_at||p.opportunity_date);return d?Math.max(0,Math.floor((today.getTime()-new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime())/86400000)):999};
  const stale=active.filter(p=>age(p)>14);
@@ -52,7 +55,7 @@ export default async function SalesPerformancePage(){
  const focus=new Set(history.filter(h=>inWeek(h.action_date)&&["Tender – High Probability","In Hand"].includes(h.new_action)).map(h=>String(h.project_id))).size;
  const top=active.slice().sort((a,b)=>Number(b.estimated_value||0)-Number(a.estimated_value||0)).slice(0,8);
  return <main className="nexus-page sales-performance-workspace">
-  <header className="nexus-page-head"><div><div className="eyebrow">ANALYTICS & PERFORMANCE</div><h1>Sales Performance</h1><p>Sales activity, pipeline movement, forecast and commercial performance.</p></div><div className="nexus-head-actions"><span className="workspace-chip"><Activity size={14}/> Current week · {week.toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}</span></div></header>
+  <header className="nexus-page-head"><div><div className="eyebrow">ANALYTICS & PERFORMANCE</div><h1>Sales Performance</h1><p>Sales activity, pipeline movement, forecast and commercial performance.</p></div><div className="nexus-head-actions"><span className="workspace-chip"><Activity size={14}/> Current week · {new Date(weekKey+"T00:00:00Z").toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}</span></div></header>
   <section className="dashboard-stat-grid sales-period-kpis">
    {([ [ChartNoAxesCombined,"New Projects",periodProjects,"Created this week","blue"],[CalendarCheck2,"Calls",calls,"Recorded this week","purple"],[Target,"Visits",visits,"Customer / site visits","green"],[CalendarCheck2,"Meetings",meetings,"Recorded this week","amber"],[Target,"Moved to Focus",focus,"High probability / In Hand","blue"],[TrendingUp,"Negotiation",active.filter(p=>p.current_action==="Negotiation").length,"Current projects","purple"],[FileCheck2,"Deals Done",won.length,"Closed Won","green"],[CircleDollarSign,"Open Pipeline",money(openPipeline),"Active estimated value","amber" ]] as PerformanceCard[]).map(([Icon,label,value,sub,tone])=><div className="nexus-stat-card" key={label as string}><div className={"nexus-stat-icon "+tone}><Icon size={18}/></div><div><span>{label}</span><strong>{value}</strong><small>{sub}</small></div></div>)}
   </section>
