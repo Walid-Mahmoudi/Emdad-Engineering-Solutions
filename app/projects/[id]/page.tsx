@@ -53,7 +53,7 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
 
     {!project.deleted_at&&<ProjectActions project={{project_id:project.project_id,current_action:project.current_action||null,estimated_value:project.estimated_value==null?null:Number(project.estimated_value)}} followUps={(followups.data||[]).map(f=>({followup_id:f.followup_id,followup_type:f.followup_type||null,result:f.result||null,followup_date:f.followup_date,completed_at:f.completed_at||null}))} contract={contractRow?{contract_id:contractRow.contract_id,contract_value:Number(contractRow.contract_value||0)}:null} collected={collected} />}
 
-    <ProjectDangerZone projectId={project.project_id} role={profile.role||""} />
+    {!project.deleted_at&&<ProjectDangerZone projectId={project.project_id} role={profile.role||""} />}
 
     <section className="card">
       <div className="section-head"><h2>Project Information</h2></div>
