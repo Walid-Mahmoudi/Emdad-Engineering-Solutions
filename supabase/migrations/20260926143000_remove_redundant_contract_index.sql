@@ -1,0 +1,1 @@
+drop index if exists public.contracts_one_per_project_idx;

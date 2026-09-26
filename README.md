@@ -16,3 +16,9 @@ Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in .env.lo
 Authentication is handled by Supabase Auth. CRM authorization is derived from the public.users record and database RLS; the browser must not be trusted for sales-person filtering.
 
 EMDAD NEXUS Projects module is under implementation.
+
+## Preview validation
+Preview deployments are validated from `feature/projects-module` before production promotion.
+
+## Data migration
+Legacy CRM activity, project history, follow-ups, contracts, and collections are being migrated into the Supabase-backed NEXUS data model.

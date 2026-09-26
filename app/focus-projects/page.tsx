@@ -1,0 +1,11 @@
+import { createClient } from "@/lib/supabase/server";
+import FocusClient from "./FocusClient";
+import { Crosshair, Target, TrendingUp } from "lucide-react";
+export default async function FocusPage(){
+ const s=await createClient();const {data:{user}}=await s.auth.getUser();if(!user)return <main className="nexus-page"><h1>Focus Projects</h1><p>Unauthorized</p></main>;
+ const {data}=await s.from("projects").select("project_id,project_name,client,estimated_value,current_action,next_followup_date,last_followup_date,updated_at,location,project_type").in("current_action",["Tender – High Probability","In Hand","Negotiation"]).order("updated_at",{ascending:false});
+ const rows=data??[],value=rows.reduce((n,p)=>n+Number(p.estimated_value||0),0),neg=rows.filter(p=>p.current_action==="Negotiation").length,noNext=rows.filter(p=>!p.next_followup_date).length;
+ return <main className="nexus-page focus-workspace"><header className="nexus-page-head"><div><div className="eyebrow">OPPORTUNITY MANAGEMENT</div><h1>Focus Projects</h1><p>High-priority opportunities requiring active commercial attention.</p></div><div className="nexus-head-actions"><span className="workspace-chip"><Crosshair size={14}/> Focus queue</span></div></header>
+ <section className="dashboard-stat-grid finance-kpis"><div className="nexus-stat-card"><div className="nexus-stat-icon blue"><Target size={18}/></div><div><span>Focus Projects</span><strong>{rows.length}</strong><small>High Probability · In Hand · Negotiation</small></div></div><div className="nexus-stat-card"><div className="nexus-stat-icon purple"><TrendingUp size={18}/></div><div><span>Focus Value</span><strong>{value.toLocaleString()} EGP</strong><small>Estimated portfolio value</small></div></div><div className="nexus-stat-card"><div className="nexus-stat-icon amber"><Target size={18}/></div><div><span>Negotiation</span><strong>{neg}</strong><small>Current negotiation stage</small></div></div><div className="nexus-stat-card"><div className="nexus-stat-icon green"><Crosshair size={18}/></div><div><span>No Next Action</span><strong>{noNext}</strong><small>Requires follow-up planning</small></div></div></section>
+ <FocusClient projects={rows}/></main>;
+}

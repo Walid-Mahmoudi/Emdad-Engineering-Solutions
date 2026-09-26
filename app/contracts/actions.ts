@@ -1,0 +1,28 @@
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import { writeAuditLog } from "@/lib/audit";
+
+async function authContext(){
+  const supabase=await createClient();
+  const {data:{user}}=await supabase.auth.getUser();
+  if(!user) throw new Error("Unauthorized");
+  return {supabase,user};
+}
+async function audit(supabase:any,user:any,action:string,entityType:string,entityId:string,details:any){
+  await writeAuditLog({userEmail:user.email||"unknown",action,entityType,entityId,details});
+}
+export async function createContract(input:{projectId:string;contractDate:string;contractValue:number}){
+  if(!input.contractDate||!Number.isFinite(input.contractValue)||input.contractValue<=0) throw new Error("Contract date and a positive contract value are required");
+  const {supabase,user}=await authContext();
+  const {data:project,error:pe}=await supabase.from("projects").select("project_id,current_action,estimated_value").eq("project_id",input.projectId).maybeSingle();
+  if(pe) throw new Error(pe.message); if(!project) throw new Error("Project not found or not accessible");
+  if(project.current_action!=="Closed Won") throw new Error("Contract can only be created for Closed Won projects");
+  const {data:existing}=await supabase.from("contracts").select("contract_id").eq("project_id",input.projectId).maybeSingle();
+  if(existing) throw new Error("Project already has a contract");
+  const id=crypto.randomUUID();
+  const {error}=await supabase.from("contracts").insert({contract_id:id,project_id:input.projectId,contract_date:input.contractDate,contract_value:input.contractValue,created_at:new Date().toISOString(),updated_at:new Date().toISOString()});
+  if(error) throw new Error(error.message);
+  await audit(supabase,user,"Contract Created","Contract",id,{project_id:input.projectId,contract_value:input.contractValue});
+  return id;
+}
