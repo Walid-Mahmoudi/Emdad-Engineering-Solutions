@@ -8,8 +8,8 @@ export default async function DealsPage(){
  if(!user)return <main className="nexus-page"><h1>Deals Done</h1><p>Unauthorized</p></main>;
  const {data:contracts}=await s.from("contracts").select("contract_id,project_id,contract_date,contract_value,projects(project_id,project_name,client,current_action,sales_person)").order("contract_date",{ascending:false});
  const rows=contracts??[];const ids=rows.map(c=>c.contract_id);
- const {data:cols}=ids.length?await s.from("collections").select("contract_id,amount").in("contract_id",ids):{data:[]};
- const collectedBy=new Map<string,number>();for(const c of cols??[])collectedBy.set(c.contract_id,(collectedBy.get(c.contract_id)||0)+Number(c.amount||0));
+ const {data:cols}=ids.length?await s.from("collections").select("contract_id,amount,status,collection_date").in("contract_id",ids):{data:[]};
+ const collectedBy=new Map<string,number>();for(const c of cols??[]){if(String(c.status||"").toLowerCase()==="cancelled")continue;if(!c.collection_date)continue;collectedBy.set(c.contract_id,(collectedBy.get(c.contract_id)||0)+Number(c.amount||0));}
  const view=rows.map(c=>{const p=Array.isArray(c.projects)?c.projects[0]:c.projects;const value=Number(c.contract_value||0),collected=collectedBy.get(c.contract_id)||0;return {...c,p,value,collected,remaining:Math.max(0,value-collected),pct:value?Math.min(100,Math.round(collected/value*100)):0}});
  const total=view.reduce((n,r)=>n+r.value,0), collected=view.reduce((n,r)=>n+r.collected,0);
  return <main className="nexus-page deals-workspace">
