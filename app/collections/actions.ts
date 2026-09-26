@@ -1,5 +1,6 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
+import { writeAuditLog } from "@/lib/audit";
 const collectedStatuses = new Set(["collected","paid","تم التحصيل","محصل","محصلة","تحصيل"]);
 const cancelledStatuses = new Set(["cancelled","canceled","ملغى","ملغاة"]);
 function countsAsCollected(row:{status?:string|null;collection_date?:string|null}){const status=String(row.status||"").trim().toLowerCase();const date=String(row.collection_date||"").trim();return !cancelledStatuses.has(status)&&(collectedStatuses.has(status)||date!=="");}
@@ -16,7 +17,7 @@ export async function addCollection(input:{contractId:string;projectId:string;da
  const id=crypto.randomUUID(),now=new Date().toISOString();
  const {error}=await supabase.from("collections").insert({collection_id:id,contract_id:input.contractId,project_id:input.projectId,collection_date:input.date,due_date:input.dueDate||null,amount:input.amount,payment_method:input.paymentMethod||null,status:input.status||null,quarter:input.quarter||null,notes:input.notes||null,created_at:now});
  if(error)throw new Error(error.message);
- await supabase.from("audit_log").insert({log_id:crypto.randomUUID(),timestamp:now,user_email:user.email||"unknown",action:"Collection Created",entity_type:"Collection",entity_id:id,details:{project_id:input.projectId,contract_id:input.contractId,amount:input.amount,status:input.status||null}});
+ await writeAuditLog({timestamp:now,userEmail:user.email||"unknown",action:"Collection Created",entityType:"Collection",entityId:id,details:{project_id:input.projectId,contract_id:input.contractId,amount:input.amount,status:input.status||null}});
  return id;
 }
 export async function deleteCollection(collectionId:string){
@@ -24,6 +25,6 @@ export async function deleteCollection(collectionId:string){
  const {data:collection,error:fetchError}=await supabase.from("collections").select("collection_id,project_id,amount").eq("collection_id",collectionId).maybeSingle();
  if(fetchError)throw new Error(fetchError.message);if(!collection)throw new Error("Collection not found");
  const {error}=await supabase.from("collections").delete().eq("collection_id",collectionId);if(error)throw new Error(error.message);
- await supabase.from("audit_log").insert({log_id:crypto.randomUUID(),timestamp:new Date().toISOString(),user_email:user.email||"unknown",action:"Collection Deleted",entity_type:"Collection",entity_id:collectionId,details:{project_id:collection.project_id,amount:collection.amount}});
+ await writeAuditLog({userEmail:user.email||"unknown",action:"Collection Deleted",entityType:"Collection",entityId:collectionId,details:{project_id:collection.project_id,amount:collection.amount}});
  return true;
 }
