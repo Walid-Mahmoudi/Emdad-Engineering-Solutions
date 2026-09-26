@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import ProjectActions from "../ProjectActions";
+import { cappedCollectedAmount, remainingAmount } from "@/lib/finance";
 import { ArrowLeft, Building2, MapPin, UserRound, CalendarClock, CircleDollarSign, FileText, Paperclip, History, Phone } from "lucide-react";
 
 export const dynamic="force-dynamic";
@@ -31,10 +32,9 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
   ]);
 
   const contractRow=contract.data?.[0]||null;
-  const collectedStatuses=new Set(["collected","paid","تم التحصيل","محصل","محصلة","تحصيل"]);
-  const cancelledStatuses=new Set(["cancelled","canceled","ملغى","ملغاة"]);
-  const collected=(collections.data||[]).filter((c:any)=>{const status=String(c.status||"").trim().toLowerCase();const date=String(c.collection_date||"").trim();return !cancelledStatuses.has(status)&&(collectedStatuses.has(status)||date!=="");}).reduce((n,c)=>n+Number(c.amount||0),0);
   const contractValue=Number(contractRow?.contract_value||0);
+  const collected=cappedCollectedAmount(contractValue,collections.data||[]);
+  const remaining=remainingAmount(contractValue,collections.data||[]);
 
   return <main className="nexus-page project-record">
     <header className="record-header">
@@ -45,7 +45,7 @@ export default async function ProjectDetails({params}:{params:Promise<{id:string
       <div><span>Estimated Value</span><strong>{money(project.estimated_value)}</strong></div>
       <div className="card kpi"><span>Contract Value</span><strong>{money(contractValue)}</strong></div>
       <div className="card kpi"><span>Collected</span><strong>{money(collected)}</strong><small>{contractValue?Math.round(collected/contractValue*100)+"% collected":"No contract yet"}</small></div>
-      <div className="card kpi"><span>Remaining</span><strong>{money(Math.max(0,contractValue-collected))}</strong></div>
+      <div className="card kpi"><span>Remaining</span><strong>{money(remaining)}</strong></div>
     </section>
 
     <ProjectActions project={{project_id:project.project_id,current_action:project.current_action||null,estimated_value:project.estimated_value==null?null:Number(project.estimated_value)}} followUps={(followups.data||[]).map(f=>({followup_id:f.followup_id,followup_type:f.followup_type||null,result:f.result||null,followup_date:f.followup_date,completed_at:f.completed_at||null}))} contract={contractRow?{contract_id:contractRow.contract_id,contract_value:Number(contractRow.contract_value||0)}:null} collected={collected} />
