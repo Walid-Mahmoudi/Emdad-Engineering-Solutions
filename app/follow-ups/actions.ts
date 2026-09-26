@@ -89,7 +89,7 @@ export async function completeFollowUp(input:{
   }
 
   const {error:projectError}=await supabase.from("projects").update({
-    last_followup_date:followUp.followup_date, next_followup_date:input.nextActionDate||null,
+    last_followup_date:completedAt, next_followup_date:input.nextActionDate||null,
     updated_at:completedAt
   }).eq("project_id",followUp.project_id);
   if(projectError) throw new Error(projectError.message);
