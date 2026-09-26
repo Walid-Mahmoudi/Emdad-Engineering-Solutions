@@ -13,7 +13,7 @@ export default async function Dashboard(){
  const {data:profile}=await supabase.from("users").select("name,email,role,active,sales_name").eq("user_id",user.id).maybeSingle();
  if(!profile?.active)return <main className="nexus-page"><section className="nexus-empty"><div className="eyebrow">EMDAD NEXUS</div><h1>Access pending</h1><p>Your account is authenticated, but no active CRM user profile is assigned yet.</p></section></main>;
  const [{data:projects},{data:contracts},{data:followups},{data:history}]=await Promise.all([
-  supabase.from("projects").select("project_id,project_name,client,estimated_value,current_action,next_followup_date,updated_at").order("updated_at",{ascending:false}),
+  supabase.from("projects").select("project_id,project_name,client,estimated_value,current_action,next_followup_date,created_at,updated_at").order("updated_at",{ascending:false}),
   supabase.from("contracts").select("contract_id,project_id,contract_value"),
   supabase.from("follow_ups").select("project_id,followup_date,followup_type,result,next_action_date"),
   supabase.from("action_history").select("project_id,new_action,action_date")
@@ -32,7 +32,7 @@ export default async function Dashboard(){
  const meetings=fus.filter(f=>f.followup_type==="Meeting"&&inPeriod(f.followup_date)).length;
  const focusIds=new Set((history||[]).filter(h=>["Tender – High Probability","In Hand"].includes(h.new_action||"")&&inPeriod(h.action_date)).map(h=>h.project_id));
  const dealsDone=rows.filter(p=>p.current_action==="Closed Won"&&inPeriod(p.updated_at)).length;
- const newProjects=rows.filter(p=>inPeriod(p.updated_at)).length;
+ const newProjects=rows.filter(p=>inPeriod(p.created_at)).length;
  return <main className="nexus-page">
    <header className="nexus-page-head">
     <div><div className="eyebrow">SALES WORKSPACE</div><h1>Good to see you, {profile.name?.split(" ")[0]||"Walid"}</h1><p>Here’s what needs your attention today.</p></div>
@@ -42,7 +42,7 @@ export default async function Dashboard(){
     <div className="nexus-stat-card"><div className="nexus-stat-icon blue"><FolderKanban size={18}/></div><div><span>Active Projects</span><strong>{active.length}</strong><small>Across your pipeline</small></div><ArrowUpRight size={16}/></div>
     <div className="nexus-stat-card"><div className="nexus-stat-icon green"><CircleDollarSign size={18}/></div><div><span>Pipeline Value</span><strong>{money(pipelineValue)}</strong><small>Estimated active value</small></div><TrendingUp size={16}/></div>
     <div className="nexus-stat-card"><div className="nexus-stat-icon amber"><CalendarClock size={18}/></div><div><span>Follow Ups Due</span><strong>{due}</strong><small>Today or overdue</small></div><ArrowUpRight size={16}/></div>
-    <div className="nexus-stat-card"><div className="nexus-stat-icon blue"><Phone size={18}/></div><div><span>Calls · 30d</span><strong>{calls}</strong><small>Recorded activity</small></div></div>
+    <div className="nexus-stat-card"><div className="nexus-stat-icon blue"><FolderKanban size={18}/></div><div><span>New Projects · 30d</span><strong>{newProjects}</strong><small>Created during period</small></div></div>\n    <div className="nexus-stat-card"><div className="nexus-stat-icon blue"><Phone size={18}/></div><div><span>Calls · 30d</span><strong>{calls}</strong><small>Recorded activity</small></div></div>
     <div className="nexus-stat-card"><div className="nexus-stat-icon green"><MapPin size={18}/></div><div><span>Visits · 30d</span><strong>{visits}</strong><small>Customer / site visits</small></div></div>
     <div className="nexus-stat-card"><div className="nexus-stat-icon purple"><Users size={18}/></div><div><span>Meetings · 30d</span><strong>{meetings}</strong><small>Recorded activity</small></div></div>
     <div className="nexus-stat-card"><div className="nexus-stat-icon amber"><Crosshair size={18}/></div><div><span>Moved to Focus · 30d</span><strong>{focusIds.size}</strong><small>Focus-stage movement</small></div></div>
