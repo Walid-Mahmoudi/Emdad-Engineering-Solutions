@@ -10,8 +10,10 @@ const cancelledStatuses=new Set(["cancelled","canceled","ملغى","ملغاة"]
 function countsAsCollected(row:any){const status=String(row.status||"").trim().toLowerCase();const date=String(row.collection_date||"").trim();return !cancelledStatuses.has(status)&&(collectedStatuses.has(status)||date!=="");}
 function money(v:number){return Number(v||0).toLocaleString()+" EGP";}
 function inRange(v:any,from:string,to:string){if(!from&&!to)return true;const d=v?new Date(v):null;if(!d||isNaN(d.getTime()))return false;const a=from?new Date(from+"T00:00:00"):null;const b=to?new Date(to+"T23:59:59"):null;return (!a||d>=a)&&(!b||d<=b)}
-export default function ReportsClient({projects,followups,contracts,collections,history,initialType,initialFrom,initialTo}:Props){
- const [type,setType]=useState<typeof reports[number]>(reports.includes(initialType as any)?initialType as typeof reports[number]:"projects"),[from,setFrom]=useState(initialFrom||""),[to,setTo]=useState(initialTo||"");
+function periodDates(period?:string){const now=new Date();const end=new Date(now);end.setHours(23,59,59,999);const start=new Date(now);if(period==="week")start.setDate(start.getDate()-start.getDay());else if(period==="month")start.setDate(1);else if(period==="quarter"){start.setMonth(Math.floor(start.getMonth()/3)*3,1)}else return {from:"",to:""};const iso=(d:Date)=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`};return {from:iso(start),to:iso(end)};}
+export default function ReportsClient({projects,followups,contracts,collections,history,initialType,initialFrom,initialTo,initialPeriod}:Props){
+ const defaults=periodDates(initialPeriod);
+ const [type,setType]=useState<typeof reports[number]>(reports.includes(initialType as any)?initialType as typeof reports[number]:"projects"),[from,setFrom]=useState(initialFrom||defaults.from),[to,setTo]=useState(initialTo||defaults.to);
  const collectedByContract=useMemo(()=>{const m=new Map<string,number>();for(const c of collections)if(countsAsCollected(c))m.set(c.contract_id,(m.get(c.contract_id)||0)+Number(c.amount||0));return m},[collections]);
  const rows=useMemo(()=>{
   if(type==="projects")return projects.filter(p=>inRange(p.created_at||p.opportunity_date,from,to)).map(p=>[p.project_id,p.project_name,p.client,p.current_action,p.project_type,p.location,money(p.estimated_value),p.next_followup_date||"—"]);
