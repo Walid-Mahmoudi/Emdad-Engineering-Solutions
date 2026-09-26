@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import ReportsClient from "./ReportsClient";
-export default async function ReportsPage({searchParams}:{searchParams:Promise<{type?:string;from?:string;to?:string;period?:string}>}){\n const params=await searchParams;
+export default async function ReportsPage({searchParams}:{searchParams:Promise<{type?:string;from?:string;to?:string;period?:string}>}){
+ const params=await searchParams;
  const s=await createClient();
  const {data:{user}}=await s.auth.getUser();
  if(!user)return <main className="nexus-page"><h1>Reports</h1><p>Unauthorized</p></main>;
