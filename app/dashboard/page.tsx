@@ -8,8 +8,8 @@ const stages=["Tender","Tender – High Probability","In Hand","Negotiation"]; c
 
 function money(v:number){return new Intl.NumberFormat("en-EG",{style:"currency",currency:"EGP",maximumFractionDigits:0}).format(v||0)}
 
-export default async function Dashboard({searchParams}:{searchParams:Promise<{period?:string}>}){
- const params=await searchParams; const periodKey=periods.some(p=>p.key===params.period)?params.period||"month":"month"; const period=periods.find(p=>p.key===periodKey)!;
+export default async function Dashboard({searchParams}:{searchParams:Promise<{period?:string;from?:string;to?:string}>}){
+ const params=await searchParams; const periodKey=periods.some(p=>p.key===params.period)?params.period||"month":"month"; const period=periods.find(p=>p.key===periodKey)!; const customFrom=params.from||""; const customTo=params.to||"";
  const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();if(!user)redirect("/login");
  const {data:profile}=await supabase.from("users").select("name,email,role,active,sales_name").eq("user_id",user.id).maybeSingle();
  if(!profile?.active)return <main className="nexus-page"><section className="nexus-empty"><div className="eyebrow">EMDAD NEXUS</div><h1>Access pending</h1><p>Your account is authenticated, but no active CRM user profile is assigned yet.</p></section></main>;
@@ -36,7 +36,7 @@ export default async function Dashboard({searchParams}:{searchParams:Promise<{pe
  const newProjects=rows.filter(p=>inPeriod(p.created_at)).length;
  return <main className="nexus-page">
    <header className="nexus-page-head">
-    <div><div className="eyebrow">SALES WORKSPACE</div><h1>Good to see you, {profile.name?.split(" ")[0]||"Walid"}</h1><p>Here’s what needs your attention today.</p><div className="nexus-inline-filters">{periods.map(p=><Link key={p.key} href={"/dashboard?period="+p.key} className={periodKey===p.key?"nexus-primary":"nexus-secondary"}>{p.label}</Link>)}</div></div>
+    <div><div className="eyebrow">SALES WORKSPACE</div><h1>Good to see you, {profile.name?.split(" ")[0]||"Walid"}</h1><p>Here’s what needs your attention today.</p><div className="nexus-inline-filters">{periods.map(p=><Link key={p.key} href={"/dashboard?period="+p.key} className={!customFrom&&periodKey===p.key?"nexus-primary":"nexus-secondary"}>{p.label}</Link>)}<form method="get" className="nexus-inline-filters"><input type="date" name="from" defaultValue={customFrom}/><input type="date" name="to" defaultValue={customTo}/><button type="submit" className="nexus-primary">Apply</button></form></div></div>
     <div className="nexus-head-actions"><Link href="/projects" className="nexus-secondary"><FolderKanban size={16}/> View Projects</Link><Link href="/projects/new" className="nexus-primary"><Plus size={16}/> New Project</Link></div>
    </header>
    <section className="dashboard-stat-grid">
@@ -54,7 +54,7 @@ export default async function Dashboard({searchParams}:{searchParams:Promise<{pe
     <div className="nexus-stat-card"><div className="nexus-stat-icon blue"><CircleDollarSign size={18}/></div><div><span>Collected</span><strong>{money(collected)}</strong><small>Recorded collections</small></div></div>
     <div className="nexus-stat-card"><div className="nexus-stat-icon amber"><CircleDollarSign size={18}/></div><div><span>Remaining</span><strong>{money(Math.max(contractValue-collected,0))}</strong><small>Outstanding balance</small></div></div>
    </section>
-   <div className="dashboard-grid">
+   <section className="nexus-panel" style={{marginBottom:20}}><div className="nexus-panel-head"><div><span className="eyebrow">FOLLOW-UP CONTROL</span><h2>Action queue</h2></div><Link href="/follow-ups">Open follow-ups <ArrowUpRight size={14}/></Link></div><div className="stage-list"><div className="stage-row"><div className="stage-name"><span>Today</span></div><strong>{todayFollowups}</strong><span className="stage-value">Due today</span></div><div className="stage-row"><div className="stage-name"><span>Overdue</span></div><strong>{overdueFollowups}</strong><span className="stage-value">Needs attention</span></div><div className="stage-row"><div className="stage-name"><span>No Next Action</span></div><strong>{noNextAction}</strong><span className="stage-value">Active projects</span></div></div></section>\n   <div className="dashboard-grid">
     <section className="nexus-panel"><div className="nexus-panel-head"><div><span className="eyebrow">PIPELINE</span><h2>Stage overview</h2></div><Link href="/pipeline">Open pipeline <ArrowUpRight size={14}/></Link></div>
       <div className="stage-list">{stages.map((s,i)=><div className="stage-row" key={s}><div className="stage-name"><span className={"stage-dot s"+i}/><span>{s}</span></div><strong>{active.filter(p=>p.current_action===s).length}</strong><span className="stage-value">{money(active.filter(p=>p.current_action===s).reduce((n,p)=>n+Number(p.estimated_value||0),0))}</span></div>)}</div>
     </section>
