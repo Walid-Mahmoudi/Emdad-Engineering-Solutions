@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { writeAuditLog } from "@/lib/audit";
 
 async function requireActiveUser(){
   const supabase=await createClient();
@@ -28,11 +29,7 @@ export async function softDeleteProject(projectId:string){
   const {error}=await supabase.from("projects").update({deleted_at:now,deleted_by:user.id,updated_at:now}).eq("project_id",id);
   if(error) throw new Error(error.message);
 
-  await supabase.from("audit_log").insert({
-    log_id:crypto.randomUUID(),timestamp:now,user_email:user.email||"unknown",
-    action:"Project Soft Deleted",entity_type:"Project",entity_id:id,
-    details:{project_id:id,project_name:project.project_name,deleted_by:user.id,source:"CRM"}
-  });
+  await writeAuditLog({timestamp:now,userEmail:user.email||"unknown",action:"Project Soft Deleted",entityType:"Project",entityId:id,details:{project_id:id,project_name:project.project_name,deleted_by:user.id,source:"CRM"}});
 
   revalidatePath("/projects");
   revalidatePath("/projects/deleted");
@@ -55,11 +52,7 @@ export async function restoreProject(projectId:string){
   const {error}=await supabase.from("projects").update({deleted_at:null,deleted_by:null,updated_at:now}).eq("project_id",id);
   if(error) throw new Error(error.message);
 
-  await supabase.from("audit_log").insert({
-    log_id:crypto.randomUUID(),timestamp:now,user_email:user.email||"unknown",
-    action:"Project Restored",entity_type:"Project",entity_id:id,
-    details:{project_id:id,project_name:project.project_name,restored_by:user.id,source:"CRM"}
-  });
+  await writeAuditLog({timestamp:now,userEmail:user.email||"unknown",action:"Project Restored",entityType:"Project",entityId:id,details:{project_id:id,project_name:project.project_name,restored_by:user.id,source:"CRM"}});
 
   revalidatePath("/projects");
   revalidatePath("/projects/deleted");
