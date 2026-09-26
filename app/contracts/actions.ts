@@ -25,13 +25,3 @@ export async function createContract(input:{projectId:string;contractDate:string
   await audit(supabase,user,"Contract Created","Contract",id,{project_id:input.projectId,contract_value:input.contractValue});
   return id;
 }
-export async function deleteContract(contractId:string){
-  const {supabase,user}=await authContext();
-  const {data:contract,error}=await supabase.from("contracts").select("contract_id,project_id").eq("contract_id",contractId).maybeSingle();
-  if(error) throw new Error(error.message); if(!contract) throw new Error("Contract not found");
-  await supabase.from("collections").delete().eq("contract_id",contractId);
-  const {error:de}=await supabase.from("contracts").delete().eq("contract_id",contractId);
-  if(de) throw new Error(de.message);
-  await audit(supabase,user,"Contract Deleted","Contract",contractId,{project_id:contract.project_id,linked_collections_deleted:true});
-  return true;
-}
