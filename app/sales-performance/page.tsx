@@ -33,12 +33,12 @@ export default async function SalesPerformancePage(){
  }
  const active=projects.filter(p=>!["Closed Won","Closed Lost"].includes(p.current_action));
  const won=projects.filter(p=>p.current_action==="Closed Won");
- const dealsDoneThisWeek=projects.filter(p=>p.current_action==="Closed Won"&&inWeek(p.updated_at||p.opportunity_date)).length;
- const todayKey=cairoDate();
+  const todayKey=cairoDate();
  const weekKey=startOfWeekKey(todayKey);
  const week=startOfWeekKey(todayKey);
  const nextWeek=new Date(week+"T00:00:00Z");nextWeek.setUTCDate(nextWeek.getUTCDate()+7);
  const inWeek=(v:any)=>{const key=dateOnly(v);return !!key&&key>=week&&key<nextWeek.toISOString().slice(0,10)};
+ const dealsDoneThisWeek=projects.filter(p=>p.current_action==="Closed Won"&&inWeek(p.updated_at||p.opportunity_date)).length;
  const pending=(f:any)=>String(f.next_action_status||"Pending")!=="Completed"&&!f.completed_at;
  const todayCount=followups.filter(f=>pending(f)&&dateOnly(f.followup_date)===todayKey).length;
  const overdue=followups.filter(f=>pending(f)&&dateOnly(f.followup_date)&&dateOnly(f.followup_date)!<todayKey).length;
