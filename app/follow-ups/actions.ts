@@ -40,7 +40,8 @@ export async function addFollowUp(input:{
   });
   if(error) throw new Error(error.message);
 
-  const nextFollowupDate=input.nextActionDate || project.next_followup_date || null;
+  // Keep the project's next scheduled touchpoint aligned with the activity queue.
+  const nextFollowupDate=input.nextActionDate || input.date;
   const {error:updateError}=await supabase.from("projects").update({
     last_followup_date:input.date, next_followup_date:nextFollowupDate, updated_at:now
   }).eq("project_id",input.projectId);
@@ -89,7 +90,7 @@ export async function completeFollowUp(input:{
   }
 
   const {error:projectError}=await supabase.from("projects").update({
-    last_followup_date:completedAt, next_followup_date:input.nextActionDate||null,
+    last_followup_date:followUp.followup_date, next_followup_date:input.nextActionDate||null,
     updated_at:completedAt
   }).eq("project_id",followUp.project_id);
   if(projectError) throw new Error(projectError.message);
