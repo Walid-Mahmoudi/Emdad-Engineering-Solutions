@@ -19,3 +19,6 @@ EMDAD NEXUS Projects module is under implementation.
 
 ## Preview validation
 Preview deployments are validated from `feature/projects-module` before production promotion.
+
+## Data migration
+Legacy CRM activity, project history, follow-ups, contracts, and collections are being migrated into the Supabase-backed NEXUS data model.
