@@ -91,17 +91,29 @@ export async function runCrmAutomation() {
     if (overdue || due <= windowEnd) candidates.push({ followup: followUp, project, email: user.email, due, overdue });
   }
 
+  const uniqueKeys = candidates.map((item) => {
+    const kind = item.overdue ? "overdue_follow_up" : "follow_up_reminder";
+    return `${kind}:${item.followup.followup_id}:${item.due.toISOString().slice(0,13)}`;
+  });
+  const { data: existingNotifications, error: existingError } = uniqueKeys.length
+    ? await supabase.from("notifications").select("unique_key").in("unique_key", uniqueKeys)
+    : { data: [], error: null };
+  if (existingError) throw existingError;
+  const existingKeys = new Set((existingNotifications ?? []).map((row) => String(row.unique_key)));
+
   let created = 0;
   for (const item of candidates) {
     const kind = item.overdue ? "overdue_follow_up" : "follow_up_reminder";
     const uniqueKey = `${kind}:${item.followup.followup_id}:${item.due.toISOString().slice(0,13)}`;
+    if (existingKeys.has(uniqueKey)) continue;
+
     const title = item.overdue ? "Overdue Follow-Up" : "Upcoming Follow-Up";
     const dueLabel = item.due.toLocaleString("en-GB", { timeZone });
     const message = item.overdue
       ? `${item.project.project_name} — follow-up is overdue (scheduled ${dueLabel}).`
       : `${item.project.project_name} — ${item.followup.followup_type} scheduled for ${dueLabel}.`;
 
-    const { error } = await supabase.from("notifications").upsert({
+    const { error } = await supabase.from("notifications").insert({
       notification_id: crypto.randomUUID(),
       unique_key: uniqueKey,
       recipient_email: item.email,
@@ -111,12 +123,13 @@ export async function runCrmAutomation() {
       message,
       due_date: item.due.toISOString(),
       created_at: now.toISOString()
-    }, { onConflict: "unique_key", ignoreDuplicates: true });
+    });
 
     if (error) {
       if (error.code === "23505") continue;
       throw error;
     }
+    existingKeys.add(uniqueKey);
     created++;
   }
 
