@@ -5,15 +5,13 @@ import { Download, FileCheck2, Filter, RefreshCw } from "lucide-react";
 type Props={projects:any[];followups:any[];contracts:any[];collections:any[];history:any[];initialType?:string;initialFrom?:string;initialTo?:string;initialPeriod?:string};
 const reports=["projects","pipeline","focus","followups","contracts","clients","salesperformance"] as const;
 const labels:any={projects:"Projects Report",pipeline:"Pipeline Report",focus:"Focus Projects",followups:"Follow-Up Report",contracts:"Contracts & Collections",clients:"Client Report",salesperformance:"Sales Performance"};
-const stages=["Tender","Tender – High Probability","In Hand","Negotiation","Closed Won","Closed Lost"];
 const collectedStatuses=new Set(["collected","paid","تم التحصيل","محصل","محصلة","تحصيل"]);
 const cancelledStatuses=new Set(["cancelled","canceled","ملغى","ملغاة"]);
 function countsAsCollected(row:any){const status=String(row.status||"").trim().toLowerCase();const date=String(row.collection_date||"").trim();return !cancelledStatuses.has(status)&&(collectedStatuses.has(status)||date!=="");}
 function money(v:number){return Number(v||0).toLocaleString()+" EGP";}
 function inRange(v:any,from:string,to:string){if(!from&&!to)return true;const d=v?new Date(v):null;if(!d||isNaN(d.getTime()))return false;const a=from?new Date(from+"T00:00:00"):null;const b=to?new Date(to+"T23:59:59"):null;return (!a||d>=a)&&(!b||d<=b)}
-export default function ReportsClient({projects,followups,contracts,collections}:Props){
- const [type,setType]=useState<typeof reports[number]>("projects"),[from,setFrom]=useState(""),[to,setTo]=useState("");
- const contractByProject=useMemo(()=>new Map(contracts.map(c=>[String(c.project_id),c])),[contracts]);
+export default function ReportsClient({projects,followups,contracts,collections,history,initialType,initialFrom,initialTo}:Props){
+ const [type,setType]=useState<typeof reports[number]>(reports.includes(initialType as any)?initialType as typeof reports[number]:"projects"),[from,setFrom]=useState(initialFrom||""),[to,setTo]=useState(initialTo||"");
  const collectedByContract=useMemo(()=>{const m=new Map<string,number>();for(const c of collections)if(countsAsCollected(c))m.set(c.contract_id,(m.get(c.contract_id)||0)+Number(c.amount||0));return m},[collections]);
  const rows=useMemo(()=>{
   if(type==="projects")return projects.filter(p=>inRange(p.created_at||p.opportunity_date,from,to)).map(p=>[p.project_id,p.project_name,p.client,p.current_action,p.project_type,p.location,money(p.estimated_value),p.next_followup_date||"—"]);
