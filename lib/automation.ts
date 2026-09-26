@@ -11,6 +11,10 @@ function setting(map: Map<string,string>, key: string, fallback: string) {
   return map.get(key) ?? fallback;
 }
 
+function normalizeSalesName(value: unknown) {
+  return String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 function localToDate(date: string, time: string, timeZone: string) {
   const [year, month, day] = date.split("-").map(Number);
   const [hour, minute, second = 0] = time.split(":").map(Number);
@@ -47,7 +51,7 @@ export async function runCrmAutomation() {
   const cfg = new Map((settings ?? []).map((row) => [String(row.type), String(row.value ?? "")]));
   if (setting(cfg, "AUTOMATION_ENABLED", "on") === "off") {
     await supabase.from("automation_log").insert({
-      run_id: crypto.randomUUID(), run_at: started.toISOString(), job: "Hourly CRM Automation",
+      run_id: crypto.randomUUID(), run_at: started.toISOString(), job: "CRM Automation",
       status: "disabled", created_count: 0, email_count: 0, details: { reason: "AUTOMATION_ENABLED=off" }
     });
     return { created: 0, emailCount: 0, status: "disabled" as const };
@@ -70,14 +74,15 @@ export async function runCrmAutomation() {
   if (usersError) throw usersError;
 
   const projectMap = new Map((projects ?? []).map((p) => [String(p.project_id), p]));
-  const userMap = new Map((users ?? []).map((u) => [String(u.sales_name ?? "").trim().toLowerCase(), u]));
+  const userMap = new Map((users ?? []).map((u) => [normalizeSalesName(u.sales_name), u]));
 
   const candidates: Array<{followup:any; project:any; email:string; due:Date; overdue:boolean}> = [];
   for (const followUp of followUps ?? []) {
     if (followUp.completed_at) continue;
     const project = projectMap.get(String(followUp.project_id));
     if (!project) continue;
-    const salesName = String(project.sales_person ?? "").trim().toLowerCase();
+
+    const salesName = normalizeSalesName(project.sales_person);
     const user = userMap.get(salesName);
     if (!user?.email) continue;
 
@@ -136,7 +141,7 @@ export async function runCrmAutomation() {
   await supabase.from("automation_log").insert({
     run_id: crypto.randomUUID(),
     run_at: now.toISOString(),
-    job: "Hourly CRM Automation",
+    job: "CRM Automation",
     status: "success",
     created_count: created,
     email_count: 0,
