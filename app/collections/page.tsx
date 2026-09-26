@@ -2,10 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { WalletCards, CircleDollarSign, ReceiptText, FileCheck2 } from "lucide-react";
 import CollectionsClient from "./CollectionsClient";
-
-const collectedStatuses = new Set(["collected","paid","تم التحصيل","محصل","محصلة","تحصيل"]);
-const cancelledStatuses = new Set(["cancelled","canceled","ملغى","ملغاة"]);
-function isCollected(row:any){ const status=String(row.status||"").trim().toLowerCase(); const date=String(row.collection_date||"").trim(); return !cancelledStatuses.has(status) && (collectedStatuses.has(status) || date!==""); }
+import { collectedAmount } from "@/lib/finance";
 
 export default async function CollectionsPage() {
  const supabase=await createClient();
@@ -16,8 +13,11 @@ export default async function CollectionsPage() {
   supabase.from("contracts").select("contract_id,project_id,contract_value,projects(project_name,client)").order("contract_date",{ascending:false})
  ]);
  const items=rows??[];
- const total=items.filter(isCollected).reduce((s,r)=>s+Number(r.amount||0),0);
- const contractValue=(contracts??[]).reduce((s,r)=>s+Number(r.contract_value||0),0);
+ const contractRows=contracts??[];
+ const contractValue=contractRows.reduce((s,r)=>s+Number(r.contract_value||0),0);
+ const grouped=new Map<string,any[]>();
+ items.forEach(r=>grouped.set(r.contract_id,[...(grouped.get(r.contract_id)||[]),r]));
+ const total=contractRows.reduce((s,r)=>s+Math.min(Math.max(collectedAmount(grouped.get(r.contract_id)||[]),0),Math.max(Number(r.contract_value||0),0)),0);
  const remaining=Math.max(contractValue-total,0);
  return <main className="nexus-page finance-workspace">
   <header className="nexus-page-head"><div><div className="eyebrow">REVENUE & FINANCE</div><h1>Collections</h1><p>Monitor cash collected against signed contract value.</p></div><div className="nexus-head-actions"><Link href="/contracts" className="nexus-secondary"><FileCheck2 size={14}/> Contracts</Link></div></header>
