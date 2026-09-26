@@ -1,15 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getAutomationClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("Automation service credentials are not configured.");
+  return createClient(url, key);
+}
 
 function setting(map: Map<string,string>, key: string, fallback: string) {
   return map.get(key) ?? fallback;
 }
 
 export async function runCrmAutomation() {
+  const supabase = getAutomationClient();
   const started = new Date();
   const { data: settings, error: settingsError } = await supabase.from("settings").select("type,value");
   if (settingsError) throw settingsError;
