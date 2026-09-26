@@ -10,7 +10,7 @@ type NavItem = [string,string,IconComponent];
 const workspace:NavItem[]=[
  ["/dashboard","Dashboard",LayoutDashboard],[ "/sales-performance","Sales Performance",ChartNoAxesCombined],[ "/projects","Projects",FolderKanban],[ "/pipeline","Pipeline",ChartNoAxesCombined],
  ["/focus-projects","Focus Projects",Target],[ "/follow-ups","Follow Ups",CalendarCheck2],[ "/contracts","Contracts",FileCheck2],
- ["/collections","Collections",CircleDollarSign],[ "/deals-done","Deals Done",CheckCircle2],
+ ["/collections","Collections",CircleDollarSign],
 ];
 const customers:NavItem[]=[[ "/clients","Clients",BriefcaseBusiness],[ "/reports","Reports",Gauge],[ "/notifications","Notifications",Bell]];
 export default function NexusNav({role,name,email}:{role:string;name?:string|null;email?:string|null}){
