@@ -33,6 +33,7 @@ export default async function SalesPerformancePage(){
  }
  const active=projects.filter(p=>!["Closed Won","Closed Lost"].includes(p.current_action));
  const won=projects.filter(p=>p.current_action==="Closed Won");
+ const dealsDoneThisWeek=projects.filter(p=>p.current_action==="Closed Won"&&inWeek(p.updated_at||p.opportunity_date)).length;
  const todayKey=cairoDate();
  const weekKey=startOfWeekKey(todayKey);
  const week=startOfWeekKey(todayKey);
@@ -59,7 +60,7 @@ export default async function SalesPerformancePage(){
  return <main className="nexus-page sales-performance-workspace">
   <header className="nexus-page-head"><div><div className="eyebrow">ANALYTICS & PERFORMANCE</div><h1>Sales Performance</h1><p>Sales activity, pipeline movement, forecast and commercial performance.</p></div><div className="nexus-head-actions"><span className="workspace-chip"><Activity size={14}/> Current week · {new Date(weekKey+"T00:00:00Z").toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}</span></div></header>
   <section className="dashboard-stat-grid sales-period-kpis">
-   {([ [ChartNoAxesCombined,"New Projects",periodProjects,"Created this week","blue"],[CalendarCheck2,"Calls",calls,"Recorded this week","purple"],[Target,"Visits",visits,"Customer / site visits","green"],[CalendarCheck2,"Meetings",meetings,"Recorded this week","amber"],[Target,"Moved to Focus",focus,"High probability / In Hand","blue"],[TrendingUp,"Negotiation",active.filter(p=>p.current_action==="Negotiation").length,"Current projects","purple"],[FileCheck2,"Deals Done",won.length,"Closed Won","green"],[CircleDollarSign,"Open Pipeline",money(openPipeline),"Active estimated value","amber" ]] as PerformanceCard[]).map(([Icon,label,value,sub,tone])=><div className="nexus-stat-card" key={label as string}><div className={"nexus-stat-icon "+tone}><Icon size={18}/></div><div><span>{label}</span><strong>{value}</strong><small>{sub}</small></div></div>)}
+   {([ [ChartNoAxesCombined,"New Projects",periodProjects,"Created this week","blue"],[CalendarCheck2,"Calls",calls,"Recorded this week","purple"],[Target,"Visits",visits,"Customer / site visits","green"],[CalendarCheck2,"Meetings",meetings,"Recorded this week","amber"],[Target,"Moved to Focus",focus,"High probability / In Hand","blue"],[TrendingUp,"Negotiation",active.filter(p=>p.current_action==="Negotiation").length,"Current projects","purple"],[FileCheck2,"Deals Done",dealsDoneThisWeek,"Closed Won this week","green"],[CircleDollarSign,"Open Pipeline",money(openPipeline),"Active estimated value","amber" ]] as PerformanceCard[]).map(([Icon,label,value,sub,tone])=><div className="nexus-stat-card" key={label as string}><div className={"nexus-stat-icon "+tone}><Icon size={18}/></div><div><span>{label}</span><strong>{value}</strong><small>{sub}</small></div></div>)}
   </section>
   <div className="sales-performance-grid">
    <section className="nexus-card"><div className="section-head"><div><h2>Pipeline by Stage</h2><p className="muted">Current commercial portfolio</p></div></div><div className="sales-stage-list">{stageRows.map(x=><div className="sales-stage-row" key={x.stage}><div><strong>{x.stage}</strong><span>{x.count} projects</span></div><b>{money(x.value)}</b><i><em style={{width:openPipeline?Math.min(100,x.value/openPipeline*100):0}}/></i></div>)}</div></section>
