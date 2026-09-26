@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { writeAuditLog } from "@/lib/audit";
 
 const BUCKET = "project-attachments";
 
@@ -96,7 +97,8 @@ export async function getProjectAttachmentUrl(attachmentId: string) {
 }
 
 export async function deleteProjectAttachment(attachmentId: string) {
-  const { supabase } = await requireActiveUser();
+  const { supabase, user, profile } = await requireActiveUser();
+  if (!["Admin","Manager"].includes(profile.role)) throw new Error("Only Admin or Manager can delete attachments.");
   const { data: attachment, error } = await supabase
     .from("attachments")
     .select("attachment_id,project_id,file_name,storage_path")
@@ -119,6 +121,7 @@ export async function deleteProjectAttachment(attachmentId: string) {
     .eq("attachment_id", attachment.attachment_id);
   if (deleteError) throw new Error(deleteError.message);
 
+  await writeAuditLog({userEmail:user.email||"unknown",action:"Attachment Deleted",entityType:"Attachment",entityId:attachment.attachment_id,details:{project_id:attachment.project_id,file_name:attachment.file_name}});
   revalidatePath(`/projects/${encodeURIComponent(attachment.project_id)}`);
   return { deleted: true };
 }
