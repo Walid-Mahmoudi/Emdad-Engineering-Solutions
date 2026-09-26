@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { collectedAmount } from "@/lib/finance";
 import { ArrowUpRight, BriefcaseBusiness, CalendarClock, CircleDollarSign, FolderKanban, Plus, Target, TrendingUp, Phone, MapPin, Users, Crosshair, Handshake } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,8 @@ export default async function Dashboard({searchParams}:{searchParams:Promise<{pe
  const contractRows=contracts||[];const contractValue=contractRows.reduce((n,c)=>n+Number(c.contract_value||0),0);
  const {data:collectionRows}=contractRows.length?await supabase.from("collections").select("contract_id,amount,status,collection_date").in("contract_id",contractRows.map(c=>c.contract_id)):{data:[]};
  const collectedStatuses=new Set(["collected","paid","تم التحصيل","محصل","محصلة","تحصيل"]);const cancelledStatuses=new Set(["cancelled","canceled","ملغى","ملغاة"]);
- const collected=(collectionRows||[]).filter(c=>{const st=String(c.status||"").trim().toLowerCase();return !cancelledStatuses.has(st)&&(collectedStatuses.has(st)||String(c.collection_date||"").trim()!=="");}).reduce((n,c)=>n+Number(c.amount||0),0);
+ const groupedCollections=new Map<string,any[]>();(collectionRows||[]).forEach(c=>groupedCollections.set(c.contract_id,[...(groupedCollections.get(c.contract_id)||[]),c]));
+ const collected=contractRows.reduce((n,c)=>n+Math.min(Math.max(collectedAmount(groupedCollections.get(c.contract_id)||[]),0),Math.max(Number(c.contract_value||0),0)),0);
  const today=new Date().toISOString().slice(0,10);const due=active.filter(p=>p.next_followup_date&&String(p.next_followup_date).slice(0,10)<=today).length;
  const periodStart=customFrom?new Date(customFrom+"T00:00:00"):new Date(); if(!customFrom)periodStart.setDate(periodStart.getDate()-period.days);
  const periodEnd=customTo?new Date(customTo+"T23:59:59.999"):new Date();
