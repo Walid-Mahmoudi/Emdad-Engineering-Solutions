@@ -42,10 +42,15 @@ export async function addFollowUp(input:{
 
   // A newly created activity is scheduled work, not a completed touchpoint.
   // Keep the project next-follow-up pointer aligned without overwriting the last completed follow-up.
-  const {error:updateError}=await supabase.from("projects").update({
-    next_followup_date:input.nextActionDate || input.date, updated_at:now
-  }).eq("project_id",input.projectId);
-  if(updateError) throw new Error(updateError.message);
+  const scheduledDate=input.nextActionDate || input.date;
+  const currentNext=project.next_followup_date ? new Date(project.next_followup_date).getTime() : Number.POSITIVE_INFINITY;
+  const scheduledTime=new Date(scheduledDate).getTime();
+  if(!project.next_followup_date || scheduledTime < currentNext){
+    const {error:updateError}=await supabase.from("projects").update({
+      next_followup_date:scheduledDate, updated_at:now
+    }).eq("project_id",input.projectId);
+    if(updateError) throw new Error(updateError.message);
+  }
 
   await audit(supabase,user.email||"unknown","Follow Up Created",followUpId,
     JSON.stringify({project_id:input.projectId,followup_type:input.type,followup_date:input.date}));
@@ -89,8 +94,17 @@ export async function completeFollowUp(input:{
     if(nextError) throw new Error(nextError.message);
   }
 
+  const {data:pendingFollowUps,error:pendingError}=await supabase.from("follow_ups")
+    .select("followup_date,completed_at")
+    .eq("project_id",followUp.project_id)
+    .is("completed_at",null)
+    .order("followup_date",{ascending:true})
+    .limit(1);
+  if(pendingError) throw new Error(pendingError.message);
+  const nextPending=pendingFollowUps?.[0]?.followup_date || null;
+  const nextProjectDate=input.nextActionDate || nextPending || null;
   const {error:projectError}=await supabase.from("projects").update({
-    last_followup_date:followUp.followup_date, next_followup_date:input.nextActionDate||null,
+    last_followup_date:followUp.followup_date, next_followup_date:nextProjectDate,
     updated_at:completedAt
   }).eq("project_id",followUp.project_id);
   if(projectError) throw new Error(projectError.message);
