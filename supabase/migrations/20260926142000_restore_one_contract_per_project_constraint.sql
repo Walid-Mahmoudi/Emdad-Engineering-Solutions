@@ -1,0 +1,1 @@
+create unique index if not exists contracts_one_per_project_idx on public.contracts(project_id);
