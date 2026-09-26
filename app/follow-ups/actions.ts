@@ -73,6 +73,7 @@ export async function completeFollowUp(input:{
     .eq("followup_id",input.followUpId).maybeSingle();
   if(error) throw new Error(error.message);
   if(!followUp) throw new Error("Follow-up not found or not accessible");
+  if(followUp.completed_at) throw new Error("Follow-up is already completed");
 
   const completedAt=new Date().toISOString();
   const {error:updateError}=await supabase.from("follow_ups").update({
@@ -102,7 +103,9 @@ export async function completeFollowUp(input:{
     .limit(1);
   if(pendingError) throw new Error(pendingError.message);
   const nextPending=pendingFollowUps?.[0]?.followup_date || null;
-  const nextProjectDate=input.nextActionDate || nextPending || null;
+  const nextProjectDate=input.nextActionDate && nextPending
+    ? (new Date(input.nextActionDate).getTime() <= new Date(nextPending).getTime() ? input.nextActionDate : nextPending)
+    : (input.nextActionDate || nextPending || null);
   const {error:projectError}=await supabase.from("projects").update({
     last_followup_date:followUp.followup_date, next_followup_date:nextProjectDate,
     updated_at:completedAt
