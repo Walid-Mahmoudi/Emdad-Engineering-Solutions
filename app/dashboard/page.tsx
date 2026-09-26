@@ -25,9 +25,13 @@ export default async function Dashboard({searchParams}:{searchParams:Promise<{pe
  const collectedStatuses=new Set(["collected","paid","تم التحصيل","محصل","محصلة","تحصيل"]);const cancelledStatuses=new Set(["cancelled","canceled","ملغى","ملغاة"]);
  const collected=(collectionRows||[]).filter(c=>{const st=String(c.status||"").trim().toLowerCase();return !cancelledStatuses.has(st)&&(collectedStatuses.has(st)||String(c.collection_date||"").trim()!=="");}).reduce((n,c)=>n+Number(c.amount||0),0);
  const today=new Date().toISOString().slice(0,10);const due=active.filter(p=>p.next_followup_date&&String(p.next_followup_date).slice(0,10)<=today).length;
- const periodStart=new Date(); periodStart.setDate(periodStart.getDate()-period.days);
- const inPeriod=(v:string)=>!!v&&new Date(v)>=periodStart;
+ const periodStart=customFrom?new Date(customFrom+"T00:00:00"):new Date(); if(!customFrom)periodStart.setDate(periodStart.getDate()-period.days);
+ const periodEnd=customTo?new Date(customTo+"T23:59:59.999"):new Date();
+ const inPeriod=(v:string)=>{if(!v)return false;const d=new Date(v);return d>=periodStart&&d<=periodEnd;};
  const fus=followups||[];
+ const todayFollowups=fus.filter(f=>String(f.followup_date||"").slice(0,10)===today).length;
+ const overdueFollowups=fus.filter(f=>{const d=String(f.followup_date||"").slice(0,10);return !!d&&d<today;}).length;
+ const noNextAction=active.filter(p=>!p.next_followup_date).length;
  const calls=fus.filter(f=>f.followup_type==="Call"&&inPeriod(f.followup_date)).length;
  const visits=fus.filter(f=>f.followup_type==="Visit"&&inPeriod(f.followup_date)).length;
  const meetings=fus.filter(f=>f.followup_type==="Meeting"&&inPeriod(f.followup_date)).length;
