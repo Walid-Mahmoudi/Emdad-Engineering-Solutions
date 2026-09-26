@@ -92,12 +92,12 @@ export async function saveUser(input: {
     }
   }
 
-  await supabase.from("audit_log").insert({
-    log_id: crypto.randomUUID(), timestamp: new Date().toISOString(),
-    user_email: user.email || "unknown",
+  await writeAuditLog({
+    userEmail: user.email || "unknown",
     action: userId ? "UPDATE_USER" : "CREATE_USER",
-    entity_type: "User", entity_id: userId || email,
-    details: { name, email, role: input.role, active: input.active, sales_name: salesName }
+    entityType: "User",
+    entityId: userId || email,
+    details: { name, email, role: input.role, active: input.active, sales_name: salesName },
   });
 
   return { ok: true };
@@ -120,10 +120,12 @@ export async function disableUser(userId: string) {
   });
   if (accessError) throw new Error(accessError.message);
 
-  await supabase.from("audit_log").insert({
-    log_id: crypto.randomUUID(), timestamp: new Date().toISOString(),
-    user_email: user.email || "unknown", action: "DISABLE_USER", entity_type: "User", entity_id: id,
-    details: { name: target.name, email: target.email, role: target.role, sales_name: target.sales_name || "" }
+  await writeAuditLog({
+    userEmail: user.email || "unknown",
+    action: "DISABLE_USER",
+    entityType: "User",
+    entityId: id,
+    details: { name: target.name, email: target.email, role: target.role, sales_name: target.sales_name || "" },
   });
   return { ok: true };
 }
