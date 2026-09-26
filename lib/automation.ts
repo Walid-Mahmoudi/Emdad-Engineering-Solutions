@@ -11,6 +11,33 @@ function setting(map: Map<string,string>, key: string, fallback: string) {
   return map.get(key) ?? fallback;
 }
 
+function cairoLocalToDate(date: string, time: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute, second = 0] = time.split(":").map(Number);
+  const guess = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Africa/Cairo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(guess);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const displayedAsUtc = Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day),
+    Number(values.hour),
+    Number(values.minute),
+    Number(values.second)
+  );
+  const offset = displayedAsUtc - guess.getTime();
+  return new Date(guess.getTime() - offset);
+}
+
 export async function runCrmAutomation() {
   const supabase = getAutomationClient();
   const started = new Date();
@@ -56,7 +83,7 @@ export async function runCrmAutomation() {
     const date = String(followUp.followup_date ?? "").slice(0,10);
     if (!date) continue;
     const time = String(followUp.followup_time ?? "00:00:00").slice(0,8);
-    const due = new Date(`${date}T${time}`);
+    const due = cairoLocalToDate(date, time);
     if (Number.isNaN(due.getTime())) continue;
 
     const overdue = due < now;
