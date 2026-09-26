@@ -1,14 +1,12 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { writeAuditLog } from "@/lib/audit";
 
 const TYPES=["Call","Visit","Email","Meeting","WhatsApp","Other"] as const;
 
 async function audit(supabase:any,userEmail:string,action:string,entityId:string,details:string) {
-  await supabase.from("audit_log").insert({
-    log_id:crypto.randomUUID(), timestamp:new Date().toISOString(), user_email:userEmail,
-    action, entity_type:"Follow Up", entity_id:entityId, details:JSON.parse(details)
-  });
+  await writeAuditLog({userEmail,action,entityType:"Follow Up",entityId,details:JSON.parse(details)});
 }
 
 export async function addFollowUp(input:{
