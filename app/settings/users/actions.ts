@@ -49,6 +49,10 @@ export async function saveUser(input: {
 
   if (userId) {
     if (userId === user.id && !input.active) throw new Error("You cannot deactivate your own EMDAD NEXUS access.");
+    const { error: authError } = await supabase.functions.invoke("admin-user-management", {
+      body: { action: input.active ? "enable" : "disable", userId }
+    });
+    if (authError) throw new Error(authError.message);
     const { data: existing, error: existingError } = await supabase.from("users").select("user_id").eq("user_id", userId).maybeSingle();
     if (existingError) throw new Error(existingError.message);
     if (!existing) throw new Error("User not found.");
@@ -60,12 +64,21 @@ export async function saveUser(input: {
     }).eq("user_id", userId);
     if (error) throw new Error(error.message);
   } else {
+    const { data: authResult, error: authError } = await supabase.functions.invoke("admin-user-management", {
+      body: { action: "create", name, email }
+    });
+    if (authError) throw new Error(authError.message);
+    const createdUserId = String(authResult?.userId || "").trim();
+    if (!createdUserId) throw new Error("Auth user was not created.");
     const now = new Date().toISOString();
     const { error } = await supabase.from("users").insert({
-      user_id: crypto.randomUUID(), name, email, role: input.role, active: input.active,
+      user_id: createdUserId, name, email, role: input.role, active: input.active,
       sales_name: input.role === "Sales" ? salesName : null, created_at: now, updated_at: now
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      await supabase.functions.invoke("admin-user-management", { body: { action: "disable", userId: createdUserId } });
+      throw new Error(error.message);
+    }
   }
 
   await supabase.from("audit_log").insert({
